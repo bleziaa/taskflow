@@ -1,0 +1,14 @@
+const { Router } = require('express');
+const { protegerCsrf } = require('../middleware/csrf');
+const controller = require('../controllers/branding.controller');
+const uploads = require('../controllers/branding-upload.controller');
+const router = Router();
+router.get('/platform', controller.obtenerGlobal);
+router.put('/platform', protegerCsrf, controller.guardarGlobal);
+router.post('/platform/upload', protegerCsrf, uploads.parseUpload, uploads.uploadGlobal);
+router.delete('/platform/upload', protegerCsrf, uploads.deleteLocal);
+router.get('/organizations/:id', controller.obtenerOrganizacion);
+router.put('/organizations/:id', protegerCsrf, controller.guardarOrganizacion);
+router.post('/organizations/:id/upload', protegerCsrf, uploads.parseUpload, uploads.uploadOrganization);
+router.delete('/organizations/:id/upload', protegerCsrf, uploads.deleteLocal);
+module.exports = router;

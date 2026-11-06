@@ -1,0 +1,62 @@
+const path = require('node:path');
+const express = require('express');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const mongoose = require('mongoose');
+const { env } = require('./config/env');
+const { crearSessionStore, crearSessionMiddleware } = require('./config/session');
+const authRoutes = require('./routes/auth.routes');
+const organizationContextRoutes = require('./routes/organization-context.routes');
+const adminRoutes = require('./routes/admin.routes');
+const practiceRoutes = require('./routes/practice.routes');
+const activityRoutes = require('./routes/activity.routes');
+const evidenceRoutes = require('./routes/evidence.routes');
+const evaluationRoutes = require('./routes/evaluation.routes');
+const reportRoutes = require('./routes/report.routes');
+const healthRoutes = require('./routes/health.routes');
+const { requireAuth, redirigirSiNoAutenticado } = require('./middleware/requireAuth');
+const notFound = require('./middleware/notFound');
+const errorHandler = require('./middleware/errorHandler');
+const RUTA_PUBLICA = path.join(__dirname, '..', 'public');
+const RUTA_BRANDING = path.join(__dirname, '..', 'storage', 'branding');
+function crearApp({ sessionStore } = {}) {
+  const app = express();
+  app.disable('x-powered-by');
+  if (env.nodeEnv === 'production') app.set('trust proxy', 1);
+  const cspDirectives = helmet.contentSecurityPolicy.getDefaultDirectives();
+  if (env.nodeEnv !== 'production') delete cspDirectives['upgrade-insecure-requests'];
+  app.use(helmet({ contentSecurityPolicy: { directives: cspDirectives } }));
+  if (env.nodeEnv !== 'test') app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
+  app.use(express.json({ limit: '10kb' }));
+  app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+  app.use(cookieParser());
+  const store = sessionStore || (mongoose.connection.readyState === 1 ? crearSessionStore() : new session.MemoryStore());
+  app.use(crearSessionMiddleware(store));
+  app.use('/media/branding', express.static(RUTA_BRANDING, { fallthrough: false, immutable: true, maxAge: '1y', dotfiles: 'deny', index: false }));
+  app.use('/api/health', healthRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/organization', requireAuth, organizationContextRoutes);
+  app.use('/api/admin', adminRoutes);
+  app.use('/api/practices', practiceRoutes);
+  app.use('/api/activities', activityRoutes);
+  app.use('/api', evidenceRoutes);
+  app.use('/api/evaluations', evaluationRoutes);
+  app.use('/api/reports', reportRoutes);
+  app.get(['/dashboard', '/dashboard.html'], redirigirSiNoAutenticado, async (req, res, next) => {
+    try {
+      const User = require('./models/User');
+      const usuario = await User.findById(req.session.userId).select('debeCambiarPassword');
+      if (usuario?.debeCambiarPassword) return res.redirect(302, '/cambiar-password.html');
+      return next();
+    } catch (error) { return next(error); }
+  });
+  app.use(express.static(RUTA_PUBLICA, { extensions: ['html'], index: 'index.html', maxAge: env.nodeEnv === 'production' ? '1h' : 0 }));
+  app.use(notFound);
+  app.use(errorHandler);
+  return app;
+}
+const app = crearApp();
+module.exports = app;
+module.exports.crearApp = crearApp;

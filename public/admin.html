@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#201c2b">
+  <title>Centro de control | TaskFlow</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/admin-polish.css">
+</head>
+<body>
+<header class="header"><div class="header-container">
+  <a class="logo" href="admin.html"><span>TaskFlow</span></a>
+  <nav class="nav-main"><ul class="nav-lista">
+    <li><a class="nav-link" href="admin.html" aria-current="page">Centro de control</a></li>
+    <li><a class="nav-link" href="admin-organizaciones.html">Organizaciones</a></li>
+    <li><a class="nav-link" href="admin-usuarios.html">Usuarios</a></li>
+    <li><a class="nav-link" href="admin-identidad.html">Identidad visual</a></li>
+    <li><span class="usuario-nombre" id="admin-nombre">Administrador general</span></li>
+    <li><button class="btn btn-secundario btn-sm" id="btn-logout" type="button">Cerrar sesión</button></li>
+  </ul></nav>
+</div></header>
+<main class="admin-page">
+  <section class="admin-hero">
+    <div><span class="admin-eyebrow">Administración global</span><h1>Centro de control</h1>
+      <p class="panel-sub">Supervisa TaskFlow, administra las instituciones y controla las cuentas desde un solo lugar.</p>
+    </div>
+    <div class="admin-hero-actions"><span class="admin-status" id="estado-panel">Consultando plataforma</span></div>
+  </section>
+
+  <div class="admin-section-head"><div><h2>Resumen de la plataforma</h2>
+    <p>Indicadores globales disponibles para el administrador general.</p></div>
+    <p id="resumen-actualizado" class="panel-sub" role="status" aria-live="polite">Cargando indicadores…</p>
+  </div>
+  <section class="admin-metricas" aria-label="Indicadores globales">
+    <article class="admin-metrica"><span>Cuentas registradas</span><strong id="metric-cuentas">—</strong><small>Identidades de docentes y estudiantes</small></article>
+    <article class="admin-metrica"><span>Organizaciones</span><strong id="metric-organizaciones">—</strong><small>Instituciones registradas</small></article>
+    <article class="admin-metrica"><span>Estudiantes</span><strong id="metric-estudiantes">—</strong><small>Registros académicos</small></article>
+    <article class="admin-metrica"><span>Docentes / tutores</span><strong id="metric-tutores">—</strong><small>Cuentas con rol global de tutor</small></article>
+    <article class="admin-metrica"><span>Empresas de prácticas</span><strong id="metric-empresas">—</strong><small>Empresas registradas en TaskFlow</small></article>
+    <article class="admin-metrica"><span>Prácticas</span><strong id="metric-practicas">—</strong><small>Procesos de práctica registrados</small></article>
+  </section>
+
+  <div class="admin-section-head"><div><h2>Módulos de administración</h2>
+    <p>Accesos directos a las herramientas de gestión global.</p></div></div>
+  <section class="admin-accesos" aria-label="Módulos de administración">
+    <a class="admin-acceso" href="admin-organizaciones.html"><span class="admin-acceso-icono">🏢</span><span><strong>Organizaciones</strong><small>Crear instituciones, consultar su estado y administrar sus miembros.</small></span><b>→</b></a>
+    <a class="admin-acceso" href="admin-usuarios.html"><span class="admin-acceso-icono">👥</span><span><strong>Usuarios y administradores</strong><small>Crear cuentas y gestionar roles y membresías institucionales.</small></span><b>→</b></a>
+    <a class="admin-acceso" href="admin-identidad.html"><span class="admin-acceso-icono">🎨</span><span><strong>Identidad visual</strong><small>Configurar la marca global y la apariencia de cada institución.</small></span><b>→</b></a>
+  </section>
+
+  <section class="admin-surface">
+    <div class="admin-section-head" style="margin-top:0"><div><h2>Alcance de la administración</h2>
+      <p>TaskFlow separa la gestión global de los espacios académicos de cada institución.</p></div></div>
+    <div class="admin-nota"><span class="admin-nota-icon">i</span><div><strong>Organización no es lo mismo que empresa de prácticas.</strong><br>Una organización representa la institución cliente que utiliza TaskFlow. Las empresas de prácticas pertenecen al espacio académico de una institución. Los administradores institucionales gestionan únicamente las organizaciones a las que están vinculados.</div></div>
+    <p id="admin-mensaje" class="form-mensaje" role="status" aria-live="polite"></p>
+  </section>
+</main>
+<script src="js/admin-dashboard.js" defer></script>
+<script src="js/theme.js" defer></script>
+</body>
+</html>

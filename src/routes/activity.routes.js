@@ -1,0 +1,15 @@
+const { Router } = require('express');
+const { requireAuth } = require('../middleware/requireAuth');
+const requireRole = require('../middleware/requireRole');
+const rejectLegacyOrganizationAccess = require('../middleware/rejectLegacyOrganizationAccess');
+const { protegerCsrf } = require('../middleware/csrf');
+const validate = require('../middleware/validate');
+const validators = require('../validators/activity.validators');
+const controller = require('../controllers/activity.controller');
+const router = Router();
+router.use(requireAuth, rejectLegacyOrganizationAccess, requireRole('administrador', 'tutor', 'estudiante'));
+router.get('/', validators.validarFiltro, validate, controller.listarActividades);
+router.post('/', requireRole('administrador', 'tutor'), protegerCsrf, validators.validarNueva, validate, controller.crearActividad);
+router.patch('/:id', requireRole('administrador', 'tutor'), protegerCsrf, validators.validarId, validators.validarActualizacion, validate, controller.actualizarActividad);
+router.delete('/:id', requireRole('administrador', 'tutor'), protegerCsrf, validators.validarId, validate, controller.eliminarActividad);
+module.exports = router;

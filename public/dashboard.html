@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tu espacio académico en TaskFlow: prácticas, actividades y progreso.">
+  <title>Mi espacio académico — TaskFlow</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='28' fill='%236841b8'/%3E%3Cpath d='M30 52 L43 65 L70 35' fill='none' stroke='white' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/dashboard-fix.css">
+  <link rel="stylesheet" href="css/organization-switcher.css">
+  <link rel="stylesheet" href="css/student-polish.css">
+  <link rel="stylesheet" href="css/student-home.css">
+</head>
+<body class="student-home">
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="header">
+    <div class="header-container">
+      <a href="dashboard.html" class="logo" aria-label="TaskFlow, inicio">
+        <span class="logo-icon" aria-hidden="true"><img src="assets/icon.png" alt=""></span><span>TaskFlow</span>
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="menu-principal" aria-label="Abrir menú de navegación">
+        <span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-main" id="menu-principal" aria-label="Navegación principal">
+        <ul class="nav-lista">
+          <li><a href="dashboard.html" class="nav-link" aria-current="page">Inicio</a></li>
+          <li><a href="courses.html" class="nav-link">Mis cursos</a></li>
+          <li><a href="practices.html" class="nav-link">Mi práctica</a></li>
+          <li><a href="activities.html" class="nav-link">Actividades</a></li>
+          <li><a href="evaluations.html" class="nav-link">Evaluaciones</a></li>
+          <li><a href="reports.html" class="nav-link">Mi progreso</a></li>
+          <li id="teacher-nav-students" hidden><a href="teacher-students.html" class="nav-link">Mis estudiantes</a></li>
+          <li class="nav-acciones">
+            <div class="usuario-sesion" aria-live="polite"><span class="usuario-nombre" id="usuario-nombre">Cargando…</span><span class="usuario-email" id="usuario-email"></span></div>
+            <button type="button" class="btn btn-secundario btn-sm" id="btn-logout">Cerrar sesión</button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="student-dashboard" id="contenido">
+    <div id="student-message" class="student-message" role="status" aria-live="polite">Preparando tu espacio académico…</div>
+    <section class="student-welcome" aria-labelledby="welcome-title">
+      <div>
+        <p class="eyebrow">MI ESPACIO ACADÉMICO</p>
+        <h1 id="welcome-title">¡Hola, <span id="student-first-name">estudiante</span>!</h1>
+        <p>Este es tu punto de partida para organizar tu práctica, cumplir tus actividades y seguir tu progreso.</p>
+      </div>
+      <div class="welcome-mark" aria-hidden="true"><span>TF</span><i></i><i></i><i></i></div>
+    </section>
+
+    <section class="student-kpis" aria-label="Resumen de tu práctica">
+      <article class="student-kpi"><span class="kpi-icon kpi-icon-purple" aria-hidden="true">▣</span><div><span class="kpi-label">Mi práctica</span><strong id="kpi-practice">—</strong><small id="kpi-practice-note">Estado actual</small></div></article>
+      <article class="student-kpi"><span class="kpi-icon kpi-icon-lilac" aria-hidden="true">✓</span><div><span class="kpi-label">Actividades completadas</span><strong id="kpi-completed">—</strong><small id="kpi-activities-note">De tus actividades</small></div></article>
+      <article class="student-kpi"><span class="kpi-icon kpi-icon-peach" aria-hidden="true">◷</span><div><span class="kpi-label">Por entregar</span><strong id="kpi-pending">—</strong><small>Actividades pendientes</small></div></article>
+      <article class="student-kpi"><span class="kpi-icon kpi-icon-green" aria-hidden="true">☆</span><div><span class="kpi-label">Mi calificación</span><strong id="kpi-grade">—</strong><small id="kpi-grade-note">Promedio de evaluación</small></div></article>
+    </section>
+
+    <div class="student-main-grid">
+      <section class="student-card progress-card" aria-labelledby="progress-title">
+        <div class="student-card-heading"><div><p class="eyebrow">TU AVANCE</p><h2 id="progress-title">Progreso de mi práctica</h2></div><span class="progress-pill" id="progress-percent">0%</span></div>
+        <div class="progress-track" role="progressbar" aria-label="Progreso de actividades completadas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar"><span id="progress-fill"></span></div>
+        <div class="progress-legend"><span><i class="legend-dot done"></i>Completadas <b id="legend-done">0</b></span><span><i class="legend-dot review"></i>En revisión <b id="legend-review">0</b></span><span><i class="legend-dot pending"></i>Pendientes <b id="legend-pending">0</b></span></div>
+        <div class="student-insight" id="progress-insight">Cuando se registren tus actividades, aquí verás cómo avanza tu práctica.</div>
+      </section>
+
+      <section class="student-card practice-card" aria-labelledby="practice-title">
+        <div class="student-card-heading"><div><p class="eyebrow">TU EXPERIENCIA</p><h2 id="practice-title">Datos de mi práctica</h2></div><span class="status-chip" id="practice-status">Sin asignar</span></div>
+        <dl class="practice-details">
+          <div><dt>Nombre</dt><dd id="practice-name">Aún no tienes una práctica asignada</dd></div>
+          <div><dt>Empresa</dt><dd id="practice-company">—</dd></div>
+          <div><dt>Docente tutor</dt><dd id="practice-tutor">—</dd></div>
+          <div><dt>Periodo</dt><dd id="practice-period">—</dd></div>
+        </dl>
+        <a class="student-text-link" href="practices.html">Consultar mi práctica <span aria-hidden="true">→</span></a>
+      </section>
+    </div>
+
+    <section class="student-card deadlines-card" aria-labelledby="deadlines-title">
+      <div class="student-card-heading"><div><p class="eyebrow">ORGANÍZATE</p><h2 id="deadlines-title">Próximas actividades</h2><p class="card-description">Ten a la vista lo que debes entregar.</p></div><a class="student-text-link" href="activities.html">Ver todas <span aria-hidden="true">→</span></a></div>
+      <div class="deadline-list" id="upcoming-activities"><p class="empty-state">Estamos consultando tus actividades…</p></div>
+    </section>
+
+    <section class="student-quick-links" aria-label="Accesos rápidos">
+      <a href="activities.html"><span class="quick-icon">✓</span><span><b>Mis actividades</b><small>Consulta instrucciones y entregas</small></span><span class="quick-arrow">→</span></a>
+      <a href="evaluations.html"><span class="quick-icon">☆</span><span><b>Mis evaluaciones</b><small>Revisa resultados y observaciones</small></span><span class="quick-arrow">→</span></a>
+      <a href="reports.html"><span class="quick-icon">▥</span><span><b>Mi progreso</b><small>Consulta el resumen de tu práctica</small></span><span class="quick-arrow">→</span></a>
+    </section>
+  </main>
+
+  <footer class="student-footer"><span>TaskFlow</span><span>Tu práctica, tu progreso, tu camino.</span><span>© 2026 TaskFlow</span></footer>
+  <script src="js/ui.js" defer></script>
+  <script src="js/student-home.js" defer></script>
+  <script src="js/theme.js" defer></script>
+  <script src="js/organization-switcher.js" defer></script>
+</body>
+</html>

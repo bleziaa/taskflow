@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Panel de acompañamiento docente de TaskFlow.">
+  <title>Panel docente — TaskFlow</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/organization-switcher.css">
+  <link rel="stylesheet" href="css/teacher-home.css">
+</head>
+<body class="teacher-home-page">
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="header"><div class="header-container">
+    <a class="logo" href="teacher-home.html" aria-label="TaskFlow, panel docente"><span class="logo-icon" aria-hidden="true">TF</span><span>TaskFlow</span></a>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="menu-principal" aria-label="Abrir menú de navegación"><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span></button>
+    <nav class="nav-main" id="menu-principal" aria-label="Navegación principal"><ul class="nav-lista">
+      <li><a class="nav-link" href="teacher-home.html" aria-current="page">Inicio</a></li>
+      <li><a class="nav-link" href="teacher-students.html">Mis estudiantes</a></li>
+      <li><a class="nav-link" href="courses.html">Mis cursos</a></li>
+      <li><a class="nav-link" href="teacher-academic.html">Evaluación de prácticas</a></li>
+      <li><a class="nav-link" href="practices.html">Prácticas</a></li>
+      
+      <li><a class="nav-link" href="reports.html">Informes</a></li>
+      <li><span class="usuario-nombre" id="teacher-name">Cargando…</span></li>
+      <li><button class="btn btn-secundario btn-sm" id="btn-logout" type="button">Cerrar sesión</button></li>
+    </ul></nav>
+  </div></header>
+
+  <main class="teacher-home" id="contenido">
+    <p class="teacher-home-message" id="teacher-home-message" role="status" aria-live="polite">Preparando tu espacio docente…</p>
+    <section class="teacher-hero">
+      <div><p class="teacher-home-eyebrow">ESPACIO DE ACOMPAÑAMIENTO</p><h1>¡Hola, <span id="teacher-first-name">docente</span>!</h1><p>Desde aquí puedes organizar tus prácticas, acompañar a tus estudiantes y mantener al día las revisiones.</p><a class="teacher-create-activity" href="courses.html">＋ Abrir mis cursos</a></div>
+      <div class="teacher-hero-art" aria-hidden="true"><span>TF</span><i></i><i></i><i></i></div>
+    </section>
+
+    <section class="teacher-home-section" aria-labelledby="overview-title">
+      <div class="teacher-section-heading"><div><p class="teacher-home-eyebrow">RESUMEN GENERAL</p><h2 id="overview-title">Tu actividad docente</h2></div><span id="active-workspace" class="teacher-workspace-label">Espacio institucional</span></div>
+      <div class="teacher-home-kpis">
+        <article class="teacher-home-kpi"><span class="teacher-kpi-icon violet">♙</span><div><span>Estudiantes asignados</span><strong id="kpi-students">—</strong><small>En tus prácticas</small></div></article>
+        <article class="teacher-home-kpi"><span class="teacher-kpi-icon lilac">◷</span><div><span>Prácticas en curso</span><strong id="kpi-practices">—</strong><small>Procesos activos</small></div></article>
+        <article class="teacher-home-kpi"><span class="teacher-kpi-icon amber">▤</span><div><span>Entregas por revisar</span><strong id="kpi-review">—</strong><small>Evidencias pendientes</small></div></article>
+        <article class="teacher-home-kpi"><span class="teacher-kpi-icon green">✓</span><div><span>Actividades pendientes</span><strong id="kpi-pending">—</strong><small>Sin completar</small></div></article>
+      </div>
+    </section>
+
+    <section class="teacher-home-section teacher-courses-section" aria-labelledby="teacher-courses-title">
+      <div class="teacher-section-heading">
+        <div><p class="teacher-home-eyebrow">DOCENCIA ACADÉMICA</p><h2 id="teacher-courses-title">Mis cursos y grupos</h2></div>
+        <a href="courses.html" class="teacher-home-link">Ver espacio académico →</a>
+      </div>
+      <div id="teacher-courses-summary" class="teacher-courses-summary" aria-live="polite"></div>
+      <div id="teacher-courses-list" class="teacher-courses-grid"><p class="teacher-home-empty">Consultando tus cursos…</p></div>
+    </section>
+
+    <div class="teacher-home-grid">
+      <section class="teacher-home-panel" aria-labelledby="attention-title">
+        <div class="teacher-section-heading"><div><p class="teacher-home-eyebrow">PARA HOY Y LOS PRÓXIMOS DÍAS</p><h2 id="attention-title">Fechas que requieren atención</h2></div><a href="courses.html" class="teacher-home-link">Abrir mis cursos →</a></div>
+        <div id="teacher-deadlines" class="teacher-deadline-list"><p class="teacher-home-empty">Consultando actividades…</p></div>
+      </section>
+      <section class="teacher-home-panel" aria-labelledby="review-title">
+        <div class="teacher-section-heading"><div><p class="teacher-home-eyebrow">SEGUIMIENTO DE ENTREGAS</p><h2 id="review-title">Evidencias por revisar</h2></div><a href="activities.html" class="teacher-home-link">Abrir bandeja →</a></div>
+        <div id="teacher-reviews" class="teacher-deadline-list"><p class="teacher-home-empty">Consultando evidencias…</p></div>
+      </section>
+    </div>
+
+    <section class="teacher-home-section" aria-labelledby="shortcuts-title">
+      <div class="teacher-section-heading"><div><p class="teacher-home-eyebrow">ACCESOS DIRECTOS</p><h2 id="shortcuts-title">Continúa tu trabajo</h2></div></div>
+      <div class="teacher-shortcuts">
+        <a href="teacher-academic.html"><span class="shortcut-symbol">∑</span><span><b>Evaluación de prácticas</b><small>Organiza módulos y ponderaciones de cada práctica.</small></span><span class="shortcut-arrow">→</span></a>
+        <a href="teacher-students.html"><span class="shortcut-symbol">♙</span><span><b>Mis estudiantes</b><small>Consulta avances y fichas de seguimiento.</small></span><span class="shortcut-arrow">→</span></a>
+        <a href="courses.html"><span class="shortcut-symbol">▤</span><span><b>Gestionar cursos</b><small>Entra a cada asignatura para organizar módulos y actividades.</small></span><span class="shortcut-arrow">→</span></a>
+        <a href="practices.html"><span class="shortcut-symbol">▣</span><span><b>Prácticas</b><small>Consulta los procesos asignados.</small></span><span class="shortcut-arrow">→</span></a>
+      </div>
+    </section>
+    <p class="teacher-home-footnote">Los indicadores se calculan con la información disponible en tus prácticas asignadas dentro del espacio institucional activo.</p>
+  </main>
+  <footer class="teacher-home-footer"><b>TaskFlow</b><span>Acompañar también es construir progreso.</span><span>© 2026 TaskFlow</span></footer>
+  <script src="js/ui.js" defer></script>
+  <script src="js/teacher-home.js" defer></script>
+  <script src="js/theme.js" defer></script>
+  <script src="js/organization-switcher.js" defer></script>
+</body>
+</html>

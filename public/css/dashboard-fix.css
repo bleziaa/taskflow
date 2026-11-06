@@ -1,0 +1,234 @@
+/* TaskFlow - restauracion visual aislada del Panel */
+body {
+  display: block !important;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--bg-body, #f7f9fc);
+}
+.header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  width: 100%;
+  display: block !important;
+}
+.header-container {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 68px;
+}
+.nav-main {
+  display: flex !important;
+  position: static;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  align-items: center;
+}
+.nav-lista {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px 20px;
+}
+.nav-toggle { display: none !important; }
+main.dashboard {
+  display: block !important;
+  position: relative;
+  width: min(100%, var(--ancho-max, 1200px));
+  max-width: var(--ancho-max, 1200px);
+  margin: 0 auto !important;
+  padding: 32px clamp(18px, 5vw, 64px) 64px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+.dashboard .demo-banner,
+.dashboard .form-mensaje,
+.dashboard .dashboard-grid,
+.dashboard .dashboard-sidebar,
+.dashboard .dashboard-contenido,
+.dashboard .dashboard-contenido > section {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+.dashboard-grid {
+  display: grid !important;
+  grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) !important;
+  align-items: start;
+  gap: 24px;
+  width: 100%;
+}
+.dashboard-sidebar {
+  position: sticky;
+  top: 92px;
+  padding: 22px 18px;
+}
+.dashboard-contenido {
+  display: flex !important;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.dashboard-contenido > section {
+  display: block !important;
+  width: 100%;
+  min-width: 0;
+  padding: 24px !important;
+  margin: 0;
+  background: var(--bg-tarjeta, #fff);
+  border: 1px solid var(--borde-suave, #e5eaf0);
+  border-radius: var(--radio-lg, 16px);
+  box-shadow: var(--sombra-suave, 0 4px 18px rgba(0,0,0,.05));
+}
+.dashboard .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.dashboard .estadisticas-dashboard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.dashboard .kanban {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.dashboard .kanban-columna {
+  min-width: 0;
+}
+.dashboard .tabla-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+.dashboard .tabla-scroll table { width: 100%; }
+.dashboard .footer { display: block; }
+@media (max-width: 1000px) {
+  .dashboard-grid { grid-template-columns: 1fr !important; }
+  .dashboard-sidebar { position: static; }
+  .sidebar-nav ul { flex-direction: row; flex-wrap: wrap; }
+}
+@media (max-width: 860px) {
+  .header-container { flex-wrap: wrap; }
+  .nav-toggle { display: inline-flex !important; }
+  .nav-main {
+    display: none !important;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 120;
+    padding: 14px;
+    background: #fff;
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio-lg);
+    box-shadow: 0 18px 40px rgba(17,24,39,.16);
+  }
+  .nav-main.abierto { display: flex !important; }
+  .nav-lista { flex-direction: column; align-items: stretch; gap: 2px; }
+  .nav-acciones { flex-direction: column; align-items: stretch; margin: 10px 0 0; }
+  .dashboard .kanban { grid-template-columns: 1fr; }
+  .dashboard .estadisticas-dashboard { align-items: stretch; }
+}
+@media (max-width: 560px) {
+  main.dashboard { padding: 22px 14px 44px !important; }
+  .dashboard-contenido > section { padding: 18px !important; }
+  .dashboard .panel-header { align-items: flex-start; }
+  .dashboard .panel-header .btn { width: 100%; }
+  .dashboard .estadisticas-dashboard { flex-direction: column; align-items: stretch; }
+  .dashboard .estadisticas-dashboard .divisor { width: 100%; height: 1px; }
+}/* TaskFlow - ampliacion del espacio util del panel (4 nov 2026) */
+main.dashboard {
+  width: min(100%, 1600px);
+  max-width: 1600px;
+  padding: 34px clamp(24px, 3.5vw, 58px) 72px !important;
+}
+.dashboard-grid {
+  grid-template-columns: minmax(230px, 270px) minmax(0, 1fr) !important;
+  gap: clamp(24px, 2.2vw, 36px);
+}
+.dashboard-sidebar { padding: 26px 22px; }
+.dashboard-sidebar .sidebar-nav ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dashboard-sidebar .sidebar-nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+.dashboard-contenido {
+  width: 100%;
+  max-width: none;
+  gap: 28px;
+}
+.dashboard-contenido > section {
+  padding: clamp(26px, 2vw, 36px) !important;
+}
+.dashboard .panel-header {
+  gap: 18px 24px;
+  margin-bottom: 22px;
+}
+.dashboard .panel-sub {
+  margin-bottom: 22px;
+  line-height: 1.75;
+}
+.dashboard .estadisticas-dashboard {
+  gap: 22px;
+  padding: 10px 0;
+}
+.dashboard .estadisticas-dashboard .estadistica-item {
+  min-width: 0;
+  padding: 8px 12px;
+}
+.dashboard .kanban { gap: 20px; }
+.dashboard .kanban-columna {
+  min-height: 150px;
+  padding: 18px;
+  border-radius: 12px;
+}
+.dashboard .tabla-scroll th,
+.dashboard .tabla-scroll td { padding: 15px 18px; }
+.dashboard .btn {
+  min-height: 42px;
+  padding: 10px 20px;
+}
+.dashboard .panel-header .btn { flex: 0 0 auto; }
+@media (max-width: 1100px) {
+  main.dashboard { width: 100%; max-width: none; }
+  .dashboard-grid {
+    grid-template-columns: minmax(210px, 250px) minmax(0, 1fr) !important;
+    gap: 22px;
+  }
+}
+@media (max-width: 900px) {
+  .dashboard-grid { grid-template-columns: 1fr !important; }
+  .dashboard-sidebar { position: static; }
+  .dashboard-sidebar .sidebar-nav ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .dashboard-sidebar .sidebar-nav li { flex: 1 1 130px; }
+}
+@media (max-width: 560px) {
+  main.dashboard { padding: 22px 14px 44px !important; }
+  .dashboard-contenido { gap: 20px; }
+  .dashboard-contenido > section { padding: 20px 16px !important; }
+  .dashboard .panel-header { gap: 14px; }
+  .dashboard .panel-header .btn { width: 100%; }
+  .dashboard .kanban { gap: 14px; }
+}

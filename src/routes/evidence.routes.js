@@ -1,0 +1,16 @@
+const { Router } = require('express');
+const { requireAuth } = require('../middleware/requireAuth');
+const requireRole = require('../middleware/requireRole');
+const rejectLegacyOrganizationAccess = require('../middleware/rejectLegacyOrganizationAccess');
+const { protegerCsrf } = require('../middleware/csrf');
+const validate = require('../middleware/validate');
+const validators = require('../validators/evidence.validators');
+const { subirEvidencia } = require('../middleware/evidenceUpload');
+const controller = require('../controllers/evidence.controller');
+const router = Router();
+const legacyGuard = [requireAuth, rejectLegacyOrganizationAccess];
+router.post('/activities/:actividadId/evidences', ...legacyGuard, requireRole('estudiante'), protegerCsrf, validators.validarActividadId, validate, subirEvidencia, controller.subir);
+router.get('/evidences/activity/:actividadId', ...legacyGuard, requireRole('administrador', 'tutor', 'estudiante'), validators.validarActividadId, validate, controller.listarPorActividad);
+router.get('/evidences/:id/download', ...legacyGuard, requireRole('administrador', 'tutor', 'estudiante'), validators.validarId, validate, controller.descargar);
+router.patch('/evidences/:id/review', ...legacyGuard, requireRole('administrador', 'tutor'), protegerCsrf, validators.validarId, validators.validarRevision, validate, controller.revisar);
+module.exports = router;

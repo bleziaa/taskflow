@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow — Gestión de Tareas para Equipos</title>
+  <meta name="description" content="TaskFlow: Organiza, prioriza y colabora con tu equipo en un tablero simple, fluido e intuitivo.">
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='28' fill='%236841b8'/%3E%3Cpath d='M30 52 L43 65 L70 35' fill='none' stroke='white' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    // En archivos locales, la preferencia viaja en la URL porque localStorage
+    // puede estar aislado por archivo (index.html y login.html).
+    try {
+      const temaEnlace = new URLSearchParams(window.location.search).get('theme');
+      if (temaEnlace === 'dark' || temaEnlace === 'light') {
+        document.documentElement.dataset.theme = temaEnlace;
+        localStorage.setItem('taskflow-theme', temaEnlace);
+      }
+    } catch (_) {}
+  </script>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+  <!-- ============ BARRA DE NAVEGACIÓN ============ -->
+  <header class="header">
+    <div class="header-container">
+      <a href="index.html" class="logo" aria-label="TaskFlow, volver al inicio">
+        <span class="logo-icon" aria-hidden="true">
+          <img src="assets/icon.png" alt="">
+        </span>
+        <span>TaskFlow</span>
+      </a>
+
+      <button
+        type="button"
+        class="nav-toggle"
+        aria-expanded="false"
+        aria-controls="menu-principal"
+        aria-label="Abrir menú de navegación"
+      >
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+
+      <nav class="nav-main" id="menu-principal" aria-label="Navegación principal">
+        <ul class="nav-lista">
+          <li><a href="#inicio" class="nav-link" aria-current="page">Inicio</a></li>
+          <li><a href="#funciones" class="nav-link">Funciones</a></li>
+          <li><a href="#como-funciona" class="nav-link">Cómo funciona</a></li>
+          <li><a href="#empresas" class="nav-link">Empresas</a></li>
+          <li class="nav-acciones">
+            <a href="login.html" class="btn btn-secundario btn-sm">Iniciar sesión</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido">
+    <!-- ============ SECCIÓN HERO ============ -->
+    <section class="hero" id="inicio">
+      <div class="hero-bg-accent" aria-hidden="true"></div>
+      <div class="hero-container">
+        <span class="badge-accent">✨ Gestión inteligente de tareas</span>
+        <h1 class="hero-titulo">Gestiona tus proyectos <br><span class="texto-gradiente">con claridad y organización</span></h1>
+        <p class="hero-descripcion">
+          Planifica actividades, asigna responsables y consulta el avance de tu equipo desde un solo espacio. TaskFlow reúne la información necesaria para mantener cada proyecto en orden.
+        </p>
+        <div class="hero-botones">
+          <a class="btn btn-primario" href="login.html">
+            <span>Iniciar sesión</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </a>
+          <a class="btn btn-secundario" href="#como-funciona">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+            <span>Ver cómo funciona</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SECCIÓN FUNCIONES ============ -->
+    <section class="funciones" id="funciones">
+      <div class="seccion-encabezado">
+        <h2>Herramientas para organizar tu trabajo</h2>
+        <p>Funciones para planificar tareas, coordinar personas y dar seguimiento a cada entrega.</p>
+      </div>
+
+      <div class="tarjetas-grid">
+        <article class="tarjeta">
+          <div class="tarjeta-icono" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+          </div>
+          <h3>Tableros Claros</h3>
+          <p>Visualiza el flujo de trabajo en columnas Kanban: pendientes, en progreso y terminados en un solo vistazo.</p>
+          <a class="tarjeta-link" href="dashboard.html#tablero">
+            <span>Explorar tableros</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </a>
+        </article>
+
+        <article class="tarjeta">
+          <div class="tarjeta-icono" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+          <h3>Trabajo en Equipo</h3>
+          <p>Asigna responsables a cada actividad y mantén el ritmo colectivo del equipo.</p>
+          <a class="tarjeta-link" href="dashboard.html#equipo">
+            <span>Invitar miembros</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </a>
+        </article>
+
+        <article class="tarjeta">
+          <div class="tarjeta-icono" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          </div>
+          <h3>Fechas y Alertas</h3>
+          <p>Establece vencimientos y prioridades por color, y consulta las fechas límite en un solo lugar.</p>
+          <a class="tarjeta-link" href="dashboard.html#recordatorios">
+            <span>Configurar alertas</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </a>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ SECCIÓN CÓMO FUNCIONA ============ -->
+    <section class="como-funciona" id="como-funciona">
+      <div class="seccion-encabezado">
+        <h2>¿Cómo funciona?</h2>
+        <p>TaskFlow reúne la planificación y el seguimiento del equipo en un mismo espacio. Así se desarrolla el trabajo desde que nace una idea hasta que se completa una actividad.</p>
+      </div>
+      <ol class="pasos">
+        <li class="paso">
+          <h3>Crea y organiza un proyecto</h3>
+          <p>El equipo parte de un proyecto y define qué se quiere lograr. Después divide el objetivo en actividades más pequeñas, establece prioridades y registra las fechas importantes para tener una ruta de trabajo clara.</p>
+        </li>
+        <li class="paso">
+          <h3>Distribuye las actividades</h3>
+          <p>Cada tarea puede quedar asociada a una persona responsable. De esta manera, los integrantes conocen sus compromisos, pueden consultar qué tienen pendiente y el equipo evita duplicar esfuerzos o dejar tareas sin asignar.</p>
+        </li>
+        <li class="paso">
+          <h3>Avanza desde el tablero</h3>
+          <p>Las actividades se organizan según su estado: pendientes, en progreso o terminadas. Al actualizar una tarea, el tablero permite reconocer qué está avanzando, qué necesita atención y cómo se mueve el trabajo del equipo.</p>
+        </li>
+        <li class="paso">
+          <h3>Controla fechas y prioridades</h3>
+          <p>Las fechas límite y los niveles de prioridad ayudan a identificar qué debe atenderse primero. El equipo puede revisar los próximos vencimientos y concentrarse en las actividades que requieren seguimiento.</p>
+        </li>
+        <li class="paso">
+          <h3>Revisa y mejora los resultados</h3>
+          <p>Al consultar el estado general de las tareas, los responsables pueden reconocer retrasos, revisar el trabajo completado y tomar decisiones para ajustar la planificación del proyecto.</p>
+        </li>
+      </ol>
+      <div class="hero-botones" style="justify-content: center; margin-top: 2rem;">
+        <a class="btn btn-primario" href="https://youtu.be/ohNiN_shWn4?si=c6s6u_2DeBTzkTj7" target="_blank" rel="noopener noreferrer" aria-label="Ver video explicativo de TaskFlow en YouTube">
+          <span>Ver video explicativo</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- ============ SECCIÓN PARA EMPRESAS ============ -->
+    <section class="estadisticas-seccion" id="empresas">
+      <div class="seccion-encabezado">
+        <h2>¿Tu empresa necesita organizar mejor sus proyectos?</h2>
+        <p>Ayudamos a las organizaciones a ordenar sus proyectos, coordinar sus equipos y tener mayor control sobre cada entrega. Conversemos sobre lo que necesita tu empresa.</p>
+      </div>
+      <div class="tarjetas-grid">
+        <article class="tarjeta">
+          <div class="tarjeta-icono" aria-hidden="true">01</div>
+          <h3>Cuéntanos qué necesitas</h3>
+          <p>Revisamos tus procesos, los equipos involucrados y los puntos que hoy hacen más difícil organizar el trabajo.</p>
+        </article>
+        <article class="tarjeta">
+          <div class="tarjeta-icono" aria-hidden="true">02</div>
+          <h3>Adaptamos la plataforma</h3>
+          <p>Proponemos una configuración con proyectos, responsables, permisos, fechas límite y alertas según tus necesidades.</p>
+        </article>
+        <article class="tarjeta">
+          <div class="tarjeta-icono" aria-hidden="true">03</div>
+          <h3>Implementamos contigo</h3>
+          <p>Te acompañamos durante la configuración inicial y validamos que la plataforma responda al flujo acordado.</p>
+        </article>
+      </div>
+      <div class="empresa-contacto" id="contacto">
+        <div>
+          <span class="badge-accent">Hablemos de tu proyecto</span>
+          <h3>Tu equipo tiene un reto. Podemos ayudarte a organizarlo.</h3>
+          <p>Cuéntanos qué buscas mejorar y revisaremos contigo una propuesta de implementación.</p>
+        </div>
+        <div class="empresa-contacto-datos">
+          <p><strong>Correo:</strong> dato de contacto pendiente</p>
+          <p><strong>Teléfono / WhatsApp:</strong> número pendiente</p>
+          <span class="contacto-nota">Los datos de contacto se publicarán cuando el equipo los confirme.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="logo">
+          <span>TaskFlow</span>
+        </div>
+        <p>Potenciando la productividad de equipos en crecimiento.</p>
+      </div>
+
+      <div class="footer-enlaces">
+        <a href="#inicio">Inicio</a>
+        <a href="#funciones">Funciones</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#empresas">Empresas</a>
+        <a href="#contacto">Contacto</a>
+        <a href="login.html">Iniciar sesión</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 TaskFlow. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="js/ui.js" defer></script>
+  <script src="js/landing.js" defer></script>
+  <script src="js/theme.js" defer></script>
+  <script>
+    document.addEventListener('click', function (event) {
+      const enlace = event.target.closest('a[href="login.html"]');
+      if (!enlace) return;
+      const tema = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+      enlace.href = 'login.html?theme=' + tema;
+    });
+  </script>
+</body>
+</html>

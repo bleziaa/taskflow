@@ -1,0 +1,27 @@
+.report-page { min-width: 0; }
+.report-toolbar { display:flex; align-items:end; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin:1rem 0 1.5rem; }
+.report-toolbar .campo { min-width:min(100%,320px); margin:0; }
+.report-actions { display:flex; gap:.6rem; flex-wrap:wrap; }
+.report-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px; margin:1rem 0 1.5rem; }
+.report-metric { background:var(--bg-tarjeta); border:1px solid var(--borde-suave); border-radius:var(--radio-md); padding:16px; display:flex; flex-direction:column; gap:4px; }
+.report-number { font-size:1.55rem; font-weight:700; color:var(--primario-oscuro); }
+.report-label,.report-meta { color:var(--texto-tenue); font-size:.84rem; }
+.report-list { display:grid; gap:1rem; }
+.report-card { background:var(--bg-tarjeta); border:1px solid var(--borde-suave); border-radius:var(--radio-lg); padding:1.2rem; box-shadow:var(--sombra-suave); }
+.report-card-head { display:flex; justify-content:space-between; align-items:start; gap:1rem; }
+.report-title h2 { font-size:1.15rem; margin-bottom:3px; }
+.report-title p { color:var(--texto-tenue); font-size:.88rem; }
+.report-status { border-radius:20px; background:var(--primario-tenue); color:var(--primario-oscuro); padding:4px 10px; font-size:.78rem; white-space:nowrap; }
+.report-progress { height:10px; background:var(--bg-sutil); border-radius:20px; overflow:hidden; margin:.4rem 0 1rem; }
+.report-progress-fill { height:100%; background:var(--exito); border-radius:20px; }
+.report-inline-stats { display:flex; flex-wrap:wrap; gap:1rem; font-size:.84rem; margin:.6rem 0; }
+.report-evaluation { font-weight:700; margin:.5rem 0; }
+.report-card .tabla-scroll { margin-top:.8rem; }
+@media print {
+ body { background:#fff; color:#111; }
+ .header,.report-toolbar,#report-message { display:none !important; }
+ .dashboard,.panel,.report-page { padding:0 !important; margin:0 !important; box-shadow:none !important; border:0 !important; }
+ .report-card { break-inside:avoid; box-shadow:none; border:1px solid #bbb; margin-bottom:12px; }
+ .report-summary { grid-template-columns:repeat(3,1fr); }
+ .report-progress-fill { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+}

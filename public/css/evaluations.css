@@ -1,0 +1,6 @@
+.evaluation-form { margin: 1rem 0 2rem; padding: 1.25rem; border: 1px solid var(--borde-suave); border-radius: 14px; }
+.evaluation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1rem; margin: 1rem 0; }
+.evaluation-wide { grid-column: 1 / -1; }
+.evaluation-card .practice-card-head h2 { margin: 0; }
+.evaluation-score { display: inline-block; padding: .4rem .8rem; border-radius: 20px; background: var(--primario-tenue); color: var(--primario-oscuro); font-weight: 700; }
+@media (max-width: 640px) { .evaluation-wide { grid-column: auto; } }

@@ -1,0 +1,36 @@
+# Dependencias
+node_modules/
+# Variables de entorno (secretos)
+.env
+.env.local
+.env.*.local
+# Cobertura
+coverage/
+.nyc_output/
+# Logs
+*.log
+npm-debug.log*
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Binarios y datos de MongoDB en memoria (pruebas)
+.mongodb-binaries/
+mongodb-memory-server/
+# Temporales
+tmp/
+dist/
+# Archivos de usuarios e identidad visual (no versionar)
+storage/evidences/
+storage/branding/
+
+# Archivos locales, copias y dependencias
+node_modules/
+storage/
+evidencias/
+backup-*/
+*.bak-*
+
+escrito/
+reports/

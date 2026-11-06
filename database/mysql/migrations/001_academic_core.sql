@@ -1,0 +1,135 @@
+-- TaskFlow: esquema relacional para el seguimiento academico multiempresa.
+-- Los IDs Mongo se conservan como CHAR(24), los usuarios y organizaciones
+-- siguen siendo maestros en MongoDB durante esta primera fase.
+CREATE TABLE IF NOT EXISTS academic_students (
+  id CHAR(24) NOT NULL,
+  organization_id CHAR(24) NOT NULL,
+  student_code VARCHAR(30) NOT NULL,
+  full_name VARCHAR(120) NOT NULL,
+  email VARCHAR(254) NOT NULL,
+  phone VARCHAR(25) NOT NULL DEFAULT '',
+  program VARCHAR(120) NOT NULL,
+  semester TINYINT UNSIGNED NOT NULL,
+  status ENUM('activo','inactivo') NOT NULL DEFAULT 'activo',
+  user_id CHAR(24) NULL,
+  company_id CHAR(24) NULL,
+  tutor_user_id CHAR(24) NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_students_org_code (organization_id, student_code),
+  UNIQUE KEY uq_students_org_email (organization_id, email),
+  KEY idx_students_user (user_id),
+  KEY idx_students_company (company_id),
+  KEY idx_students_tutor (tutor_user_id),
+  CONSTRAINT chk_students_semester CHECK (semester BETWEEN 1 AND 12)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS academic_companies (
+  id CHAR(24) NOT NULL,
+  organization_id CHAR(24) NOT NULL,
+  legal_name VARCHAR(140) NOT NULL,
+  tax_id VARCHAR(30) NOT NULL,
+  sector VARCHAR(100) NOT NULL DEFAULT '',
+  address VARCHAR(180) NOT NULL DEFAULT '',
+  city VARCHAR(100) NOT NULL,
+  contact_name VARCHAR(120) NOT NULL DEFAULT '',
+  contact_email VARCHAR(254) NOT NULL DEFAULT '',
+  phone VARCHAR(25) NOT NULL DEFAULT '',
+  status ENUM('activa','inactiva') NOT NULL DEFAULT 'activa',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_companies_org_tax_id (organization_id, tax_id),
+  KEY idx_companies_org_status (organization_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS academic_practices (
+  id CHAR(24) NOT NULL,
+  organization_id CHAR(24) NOT NULL,
+  student_id CHAR(24) NOT NULL,
+  company_id CHAR(24) NOT NULL,
+  tutor_user_id CHAR(24) NOT NULL,
+  title VARCHAR(120) NOT NULL,
+  objective TEXT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  status ENUM('planificada','en_curso','finalizada','suspendida') NOT NULL DEFAULT 'planificada',
+  observations TEXT NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_practices_org_status (organization_id, status),
+  KEY idx_practices_student_dates (student_id, start_date),
+  KEY idx_practices_tutor_status (tutor_user_id, status),
+  KEY idx_practices_company (company_id),
+  CONSTRAINT fk_practices_student FOREIGN KEY (student_id) REFERENCES academic_students(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_practices_company FOREIGN KEY (company_id) REFERENCES academic_companies(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT chk_practices_dates CHECK (end_date >= start_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS academic_activities (
+  id CHAR(24) NOT NULL,
+  organization_id CHAR(24) NOT NULL,
+  practice_id CHAR(24) NOT NULL,
+  title VARCHAR(120) NOT NULL,
+  description TEXT NULL,
+  due_date DATETIME(3) NOT NULL,
+  priority ENUM('baja','media','alta') NOT NULL DEFAULT 'media',
+  status ENUM('pendiente','en_revision','completada') NOT NULL DEFAULT 'pendiente',
+  created_by_user_id CHAR(24) NOT NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_activities_org_due (organization_id, due_date),
+  KEY idx_activities_practice_due (practice_id, due_date),
+  CONSTRAINT fk_activities_practice FOREIGN KEY (practice_id) REFERENCES academic_practices(id) ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS academic_evidences (
+  id CHAR(24) NOT NULL,
+  organization_id CHAR(24) NOT NULL,
+  activity_id CHAR(24) NOT NULL,
+  student_id CHAR(24) NOT NULL,
+  original_name VARCHAR(180) NOT NULL,
+  stored_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(120) NOT NULL,
+  file_size_bytes INT UNSIGNED NOT NULL,
+  status ENUM('pendiente','aprobada','requiere_cambios') NOT NULL DEFAULT 'pendiente',
+  tutor_observation TEXT NULL,
+  reviewed_by_user_id CHAR(24) NULL,
+  reviewed_at DATETIME(3) NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_evidences_stored_name (stored_name),
+  KEY idx_evidences_org_status (organization_id, status),
+  KEY idx_evidences_activity_created (activity_id, created_at),
+  KEY idx_evidences_student (student_id),
+  CONSTRAINT fk_evidences_activity FOREIGN KEY (activity_id) REFERENCES academic_activities(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_evidences_student FOREIGN KEY (student_id) REFERENCES academic_students(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT chk_evidences_size CHECK (file_size_bytes BETWEEN 1 AND 10485760)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS academic_evaluations (
+  id CHAR(24) NOT NULL,
+  organization_id CHAR(24) NOT NULL,
+  practice_id CHAR(24) NOT NULL,
+  student_id CHAR(24) NOT NULL,
+  tutor_user_id CHAR(24) NOT NULL,
+  score DECIMAL(3,2) NOT NULL,
+  concept ENUM('excelente','bueno','satisfactorio','insuficiente') NOT NULL,
+  strengths TEXT NULL,
+  improvement_areas TEXT NULL,
+  observations TEXT NULL,
+  evaluated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_evaluations_org_practice (organization_id, practice_id),
+  KEY idx_evaluations_student_date (student_id, evaluated_at),
+  KEY idx_evaluations_tutor_date (tutor_user_id, evaluated_at),
+  CONSTRAINT fk_evaluations_practice FOREIGN KEY (practice_id) REFERENCES academic_practices(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_evaluations_student FOREIGN KEY (student_id) REFERENCES academic_students(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT chk_evaluations_score CHECK (score BETWEEN 0 AND 5)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,0 +1,16 @@
+const { Router } = require('express');
+const { requireAuth } = require('../middleware/requireAuth');
+const requireRole = require('../middleware/requireRole');
+const rejectLegacyOrganizationAccess = require('../middleware/rejectLegacyOrganizationAccess');
+const { protegerCsrf } = require('../middleware/csrf');
+const validate = require('../middleware/validate');
+const { validarIdPractica, validarNuevaPractica, validarActualizacionPractica } = require('../validators/practice.validators');
+const controller = require('../controllers/practice.controller');
+const router = Router();
+router.use(requireAuth, rejectLegacyOrganizationAccess, requireRole('administrador', 'tutor', 'estudiante'));
+router.get('/', controller.listarPracticas);
+router.get('/:id', validarIdPractica, validate, controller.obtenerPractica);
+router.post('/', requireRole('administrador'), protegerCsrf, validarNuevaPractica, validate, controller.crearPractica);
+router.patch('/:id', requireRole('administrador'), protegerCsrf, validarIdPractica, validarActualizacionPractica, validate, controller.actualizarPractica);
+router.delete('/:id', requireRole('administrador'), protegerCsrf, validarIdPractica, validate, controller.eliminarPractica);
+module.exports = router;

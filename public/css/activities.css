@@ -1,0 +1,35 @@
+#activity-form-wrap[hidden], [hidden] { display:none !important; }
+#form-activity { margin:1.5rem 0 2rem;padding:1.25rem;border:1px solid var(--borde-suave);border-radius:14px; }
+.activity-card { padding:1.2rem;border:1px solid var(--borde-suave);border-radius:14px;background:var(--bg-tarjeta); }
+.activity-card p { margin:.45rem 0;color:var(--texto-suave); }
+.activity-card-head { display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap; }
+.activity-meta { display:flex;gap:.5rem;flex-wrap:wrap;margin:.75rem 0; }
+.activity-tag { padding:.25rem .6rem;border-radius:20px;background:var(--primario-tenue);font-size:.8rem; }
+.activity-actions { display:flex;gap:.5rem;margin-top:1rem; }
+.activity-description { white-space:pre-wrap; }
+.evidence-upload,.evidence-review { display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;margin-top:1rem;padding:1rem;border:1px dashed var(--borde-suave);border-radius:12px; }
+.evidence-upload label { flex-basis:100%;font-weight:600; }
+.evidence-upload input[type=file] { max-width:100%; }
+.evidence-list { display:grid;gap:.75rem;margin-top:1rem; }
+.evidence-item { padding:1rem;border:1px solid var(--borde-suave);border-radius:12px;background:var(--bg-tarjeta); }
+.evidence-item p { margin:.5rem 0; }
+.evidence-download { display:inline-block;margin:.4rem 0;font-weight:600; }
+.evidence-review { align-items:stretch; }
+.evidence-review select,.evidence-review textarea { min-width:180px;flex:1; }
+#evidence-message:empty { display:none; }
+
+.activity-form-help { color:var(--texto-suave); margin:.25rem 0 1rem; }
+.activity-assignment-tools { display:flex; gap:.5rem; flex-wrap:wrap; margin:.35rem 0 .5rem; }
+#a-practica[multiple] { min-height:150px; padding:.5rem; }
+#a-recurso { display:block; width:100%; padding:.7rem; border:1px dashed var(--borde-suave); border-radius:10px; background:var(--bg-tarjeta); }
+.activity-resource-download { display:inline-flex; align-items:center; gap:.5rem; margin:.65rem 0; padding:.7rem .9rem; border-radius:10px; background:rgba(104,65,184,.09); color:#6841b8; font-weight:700; text-decoration:none; overflow-wrap:anywhere; }
+.activity-resource-download:hover { background:rgba(104,65,184,.15); }
+#btn-nueva { white-space:nowrap; }
+@media(max-width:640px) { .activity-assignment-tools { flex-direction:column; align-items:stretch; } #btn-nueva { width:100%; } }
+
+.activity-assessment-form{display:grid;gap:9px;margin-top:15px;padding:15px;border:1px solid var(--borde,#e8e0f0);border-radius:14px;background:var(--bg-card,#fff)}
+.activity-assessment-form h3{margin:0 0 3px;color:var(--texto,#30283b);font-size:.98rem}
+.activity-assessment-form label{font-size:.8rem;font-weight:700;color:var(--texto-secundario,#6c6478)}
+.activity-assessment-form input,.activity-assessment-form textarea{width:100%;padding:10px 12px;border:1px solid var(--borde,#ded7e9);border-radius:10px;background:var(--bg-card,#fff);color:var(--texto,#30283b);font:inherit}
+.activity-assessment-form input{max-width:180px}
+.activity-assessment-form button{justify-self:start}

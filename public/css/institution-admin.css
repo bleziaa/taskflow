@@ -1,0 +1,71 @@
+/* Administración institucional: gestión académica responsive */
+.institution-admin{width:min(1380px,calc(100% - 48px));margin:0 auto;padding:30px 0 64px;color:var(--texto-principal)}
+.institution-hero{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:clamp(25px,4vw,42px);border:1px solid var(--primario-borde);border-radius:22px;background:linear-gradient(120deg,var(--bg-tarjeta),var(--bg-sutil));box-shadow:var(--sombra-suave)}
+.institution-eyebrow{margin:0 0 8px;color:var(--primario-oscuro);font-size:.7rem;font-weight:850;letter-spacing:.13em}
+.institution-hero h1{margin:0;color:var(--texto-principal);font-size:clamp(1.7rem,4vw,2.4rem);letter-spacing:-.04em}
+.institution-hero p:last-child{max-width:760px;margin:10px 0 0;color:var(--texto-suave);line-height:1.7;font-size:.9rem}
+.institution-hero-mark{display:grid;place-items:center;flex:0 0 92px;width:92px;height:92px;border-radius:27px;background:var(--primario-tenue);color:var(--primario);font-size:2.8rem}
+.institution-message{margin:18px 0;padding:12px 15px;border:1px solid var(--borde-suave);border-radius:12px;background:var(--bg-tarjeta);color:var(--texto-principal);font-size:.86rem}
+.institution-message[hidden]{display:none}.institution-message.is-error{border-color:#e7b9b9;background:#fff1f1;color:#8c3030}.institution-message.is-success{border-color:#b9dec8;background:#effaf2;color:#28633d}
+.institution-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0}
+.institution-kpis article{display:grid;gap:8px;padding:19px;border:1px solid var(--borde-suave);border-radius:16px;background:var(--bg-tarjeta);box-shadow:var(--sombra-suave)}
+.institution-kpis span{color:var(--texto-suave);font-size:.8rem}.institution-kpis strong{color:var(--texto-principal);font-size:1.8rem}
+.institution-panel{margin-top:20px;padding:clamp(19px,3vw,28px);border:1px solid var(--borde-suave);border-radius:19px;background:var(--bg-tarjeta);box-shadow:var(--sombra-suave)}
+.institution-panel-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px}
+.institution-panel-heading h2{margin:0;color:var(--texto-principal);font-size:1.25rem}
+.institution-panel-heading p:last-child{margin:6px 0 0;color:var(--texto-suave);font-size:.82rem;line-height:1.6;max-width:700px}
+.institution-form{margin:18px 0 22px;padding:20px;border:1px solid var(--borde-suave);border-radius:15px;background:var(--bg-sutil)}
+.institution-form[hidden]{display:none}.institution-form h3{margin:0 0 16px;color:var(--texto-principal)}
+.institution-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.institution-form-grid label{display:grid;gap:7px;color:var(--texto-principal);font-size:.78rem;font-weight:700}
+.institution-form-grid input,.institution-form-grid select{width:100%;min-height:43px;padding:10px 12px;border:1px solid var(--borde-suave);border-radius:9px;background:var(--bg-tarjeta);color:var(--texto-principal);font:inherit;font-weight:450}
+.institution-form-grid input:focus,.institution-form-grid select:focus{outline:3px solid var(--primario-tenue);border-color:var(--primario)}
+.institution-form-actions{display:flex;gap:10px;margin-top:18px}
+.institution-search{display:grid;gap:7px;max-width:380px;margin:18px 0 13px;color:var(--texto-principal);font-size:.78rem;font-weight:700}
+.institution-search input{min-height:42px;padding:10px 12px;border:1px solid var(--borde-suave);border-radius:10px;background:var(--bg-sutil);color:var(--texto-principal);font:inherit;font-weight:450}
+.institution-table-wrap{overflow-x:auto}.institution-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.institution-table th{padding:12px 10px;border-bottom:1px solid var(--borde-suave);color:var(--texto-tenue);font-size:.66rem;letter-spacing:.06em;text-align:left;text-transform:uppercase;white-space:nowrap}
+.institution-table td{padding:13px 10px;border-bottom:1px solid var(--borde-suave);color:var(--texto-principal);vertical-align:middle}
+.institution-table td strong,.institution-table td small{display:block}.institution-table td small{margin-top:4px;color:var(--texto-tenue);font-size:.68rem}
+.institution-table td:last-child{white-space:nowrap}.institution-table button{margin:2px}
+.institution-cards{display:none;gap:11px}.institution-card{padding:15px;border:1px solid var(--borde-suave);border-radius:13px;background:var(--bg-sutil)}
+.institution-card-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.institution-card p{margin:8px 0;color:var(--texto-suave);font-size:.78rem}
+.institution-state{padding:4px 8px;border-radius:99px;background:var(--primario-tenue);color:var(--primario-oscuro);font-size:.68rem;font-weight:800}
+.institution-card-actions{display:flex;gap:8px;margin-top:12px}
+.institution-footnote{margin:20px 0 0;color:var(--texto-tenue);font-size:.76rem;line-height:1.65}
+.institution-footer{display:flex;justify-content:space-between;gap:14px;padding:20px max(24px,calc((100% - 1380px)/2));border-top:1px solid var(--borde-suave);color:var(--texto-tenue);font-size:.72rem}
+.institution-footer b{color:var(--primario)}
+@media(max-width:900px){.institution-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.institution-panel-heading{align-items:flex-start;flex-direction:column}.institution-table-wrap{display:none}.institution-cards{display:grid}.institution-form-grid{grid-template-columns:1fr}.institution-admin{width:calc(100% - 28px);padding-top:18px}.institution-kpis{gap:9px}.institution-kpis article{padding:13px}.institution-kpis span{font-size:.68rem}.institution-kpis strong{font-size:1.4rem}.institution-hero-mark{width:62px;height:62px;flex-basis:62px;font-size:1.8rem;border-radius:18px}.institution-form-actions{flex-wrap:wrap}.institution-footer{flex-direction:column;padding:18px 14px}}
+
+.institution-field-wide{grid-column:1/-1}
+.institution-form-grid select[multiple]{min-height:118px}
+.institution-form-grid small{color:var(--texto-tenue);font-size:.68rem;font-weight:450;line-height:1.5}
+.institution-course-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.institution-course-card{min-width:0;padding:17px;border:1px solid var(--borde-suave);border-radius:14px;background:var(--bg-sutil)}
+.institution-course-card-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.institution-course-code{color:var(--primario-oscuro);font-size:.7rem;font-weight:850;letter-spacing:.08em}
+.institution-course-card h3{margin:12px 0 6px;color:var(--texto-principal)}
+.institution-course-card p{color:var(--texto-suave);font-size:.78rem;line-height:1.55}
+.institution-course-meta{font-weight:800}
+.institution-course-modules{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.institution-course-modules span{padding:5px 8px;border-radius:7px;background:var(--bg-tarjeta);color:var(--texto-principal);font-size:.68rem}
+.institution-course-teachers{margin-bottom:0}
+@media(max-width:760px){.institution-course-list{grid-template-columns:1fr}}
+
+/* Editor de estructura académica por curso */
+.institution-course-actions{display:flex;gap:8px;margin-top:14px}
+.course-editor{grid-column:1/-1;margin-top:8px;background:var(--bg-tarjeta)}
+.course-editor-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0 10px}
+.course-editor-heading h4,.course-editor-teachers h4{margin:0;color:var(--texto-principal);font-size:.95rem}
+.course-editor-heading span{color:var(--texto-tenue);font-size:.75rem;font-weight:750}
+.course-editor-modules{display:grid;gap:9px;margin:12px 0}
+.course-editor-module{display:grid;grid-template-columns:100px minmax(150px,1fr) minmax(160px,1.2fr) auto;gap:9px;align-items:center;padding:10px;border:1px solid var(--borde-suave);border-radius:11px;background:var(--bg-sutil)}
+.course-editor-module-number{color:var(--primario-oscuro);font-size:.76rem;font-weight:850}
+.course-editor-module input,.course-editor-teachers select,.course-editor textarea{width:100%;min-width:0;min-height:40px;padding:9px 11px;border:1px solid var(--borde-suave);border-radius:8px;background:var(--bg-tarjeta);color:var(--texto-principal);font:inherit;font-size:.8rem}
+.course-editor-teachers{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:20px;padding:15px;border:1px solid var(--borde-suave);border-radius:12px}
+.course-editor-teachers h4{flex-basis:100%}
+.course-editor-teachers select{max-width:460px;flex:1}
+.course-editor .institution-form-actions{justify-content:flex-end}
+@media(max-width:760px){.course-editor-module{grid-template-columns:1fr}.course-editor-module-number{padding-bottom:2px}.course-editor-heading{align-items:flex-start}.course-editor-teachers{align-items:stretch;flex-direction:column}.course-editor-teachers select{max-width:none}}

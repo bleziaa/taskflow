@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Seguimiento de estudiantes asignados al docente en TaskFlow.">
+  <title>Mis estudiantes — TaskFlow</title>
+  <link rel="stylesheet" href="css/styles.css"><link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/organization-switcher.css"><link rel="stylesheet" href="css/student-polish.css">
+  <link rel="stylesheet" href="css/teacher-students.css">
+</head>
+<body class="teacher-students-page">
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="header"><div class="header-container">
+    <a class="logo" href="teacher-students.html"><span>TaskFlow</span></a>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="menu-principal" aria-label="Abrir menú de navegación"><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span></button>
+    <nav class="nav-main" id="menu-principal" aria-label="Navegación principal"><ul class="nav-lista">
+      <li><a class="nav-link" href="teacher-home.html">Inicio</a></li>
+      <li><a class="nav-link" href="teacher-students.html" aria-current="page">Mis estudiantes</a></li>
+      <li><a class="nav-link" href="courses.html">Mis cursos</a></li>
+      <li><a class="nav-link" href="teacher-academic.html">Evaluación de prácticas</a></li>
+      <li><a class="nav-link" href="practices.html">Prácticas</a></li>
+      
+      <li><a class="nav-link" href="reports.html">Informes</a></li>
+      <li><span class="usuario-nombre" id="teacher-name">Cargando…</span></li>
+      <li><button class="btn btn-secundario btn-sm" id="btn-logout" type="button">Cerrar sesión</button></li>
+    </ul></nav>
+  </div></header>
+
+  <main class="teacher-students" id="contenido">
+    <div class="teacher-page-heading"><div><p class="teacher-eyebrow">ACOMPAÑAMIENTO ACADÉMICO</p><h1>Mis estudiantes</h1><p>Consulta sus prácticas, identifica avances y acompaña cada proceso.</p></div><div class="teacher-heading-mark" aria-hidden="true">✦</div></div>
+    <p class="teacher-notice" id="teacher-notice" role="status" aria-live="polite">Cargando información de tus estudiantes…</p>
+
+    <section class="teacher-summary" aria-label="Resumen de seguimiento">
+      <article class="teacher-summary-card"><span class="summary-symbol purple">♙</span><div><span>Estudiantes asignados</span><strong id="summary-students">—</strong><small>Con práctica vinculada</small></div></article>
+      <article class="teacher-summary-card"><span class="summary-symbol lilac">◷</span><div><span>Prácticas en curso</span><strong id="summary-active">—</strong><small>Procesos activos</small></div></article>
+      <article class="teacher-summary-card"><span class="summary-symbol amber">▤</span><div><span>Actividades pendientes</span><strong id="summary-pending">—</strong><small>Requieren seguimiento</small></div></article>
+    </section>
+
+    <section class="teacher-list-panel" aria-labelledby="student-list-title">
+      <div class="teacher-list-heading"><div><p class="teacher-eyebrow">TU GRUPO</p><h2 id="student-list-title">Seguimiento de estudiantes</h2><p>Solo aparecen estudiantes con prácticas asignadas a tu cuenta en este espacio de trabajo.</p></div><span class="teacher-count" id="visible-count">0 estudiantes</span></div>
+      <div class="teacher-filters">
+        <label class="teacher-search"><span aria-hidden="true">⌕</span><input id="student-search" type="search" placeholder="Buscar por nombre, código o empresa…" autocomplete="off"></label>
+        <label class="teacher-status-filter"><span class="sr-only">Filtrar por estado de práctica</span><select id="status-filter"><option value="">Todos los estados</option><option value="en_curso">En curso</option><option value="planificada">Planificada</option><option value="finalizada">Finalizada</option><option value="suspendida">Suspendida</option></select></label>
+      </div>
+      <div class="teacher-table-wrap"><table class="teacher-table"><thead><tr><th>Estudiante</th><th>Empresa</th><th>Práctica</th><th>Estado</th><th>Progreso</th><th><span class="sr-only">Acciones</span></th></tr></thead><tbody id="student-rows"><tr><td colspan="6" class="teacher-empty">Cargando estudiantes…</td></tr></tbody></table></div>
+      <div class="teacher-mobile-list" id="student-cards"></div>
+      <div class="teacher-empty-state" id="empty-filter" hidden>No encontramos estudiantes con esos criterios. Prueba otra búsqueda o filtro.</div>
+    </section>
+
+    <aside class="teacher-detail" id="student-detail" aria-labelledby="detail-name" aria-hidden="true">
+      <div class="teacher-detail-backdrop" data-close-detail></div>
+      <section class="teacher-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="detail-name">
+        <button class="detail-close" type="button" aria-label="Cerrar detalle" data-close-detail>×</button>
+        <p class="teacher-eyebrow">FICHA DE SEGUIMIENTO</p><h2 id="detail-name">Estudiante</h2><p class="detail-subtitle" id="detail-code"></p>
+        <div class="detail-progress"><div><span>Progreso de actividades</span><b id="detail-progress-value">0%</b></div><div class="detail-progress-track"><span id="detail-progress-fill"></span></div></div>
+        <div class="detail-facts" id="detail-facts"></div>
+        <h3>Actividades</h3><div class="detail-activities" id="detail-activities"></div>
+        <h3>Evaluación del tutor</h3><div class="detail-evaluation" id="detail-evaluation"><span>Aún no hay una evaluación registrada.</span></div>
+      </section>
+    </aside>
+  </main>
+  <footer class="teacher-footer"><b>TaskFlow</b><span>Seguimiento que acompaña el crecimiento.</span><span>© 2026 TaskFlow</span></footer>
+  <script src="js/ui.js" defer></script><script src="js/teacher-students.js" defer></script><script src="js/theme.js" defer></script><script src="js/organization-switcher.js" defer></script>
+</body></html>

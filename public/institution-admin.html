@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Administración académica de la institución en TaskFlow.">
+<title>Administración institucional | TaskFlow</title>
+<link rel="stylesheet" href="css/styles.css"><link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/organization-switcher.css"><link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/institution-admin.css">
+</head>
+<body class="institution-admin-page">
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<header class="header"><div class="header-container">
+<a class="logo" href="teacher-home.html"><span class="logo-icon" aria-hidden="true">TF</span><span>TaskFlow</span></a>
+<button type="button" class="nav-toggle" aria-expanded="false" aria-controls="menu-principal" aria-label="Abrir menú"><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span></button>
+<nav class="nav-main" id="menu-principal" aria-label="Navegación principal"><ul class="nav-lista">
+<li><a class="nav-link" href="teacher-home.html">Inicio</a></li><li><a class="nav-link" href="#courses-title">Estructura académica</a></li><li><a class="nav-link" href="practices.html">Prácticas</a></li>
+<li><a class="nav-link" href="reports.html">Informes</a></li>
+<li><span class="usuario-nombre" id="admin-institution-name">Cargando…</span></li>
+<li><button class="btn btn-secundario btn-sm" id="btn-logout" type="button">Cerrar sesión</button></li>
+</ul></nav></div></header>
+<main class="institution-admin" id="contenido">
+<section class="institution-hero"><div><p class="institution-eyebrow">GESTIÓN DEL ESPACIO DE TRABAJO</p><h1>Administración institucional</h1><p>Administra los registros académicos de esta institución: estudiantes, empresas de prácticas y asignaciones docentes.</p></div><div class="institution-hero-mark" aria-hidden="true">⌂</div></section>
+<p id="institution-message" class="institution-message" role="status" aria-live="polite" hidden></p>
+<section class="institution-kpis" aria-label="Resumen"><article><span>Estudiantes registrados</span><strong id="kpi-students">—</strong></article><article><span>Empresas de prácticas</span><strong id="kpi-companies">—</strong></article><article><span>Docentes disponibles</span><strong id="kpi-tutors">—</strong></article></section>
+<section class="institution-panel" aria-labelledby="students-title">
+<div class="institution-panel-heading"><div><p class="institution-eyebrow">REGISTRO ACADÉMICO</p><h2 id="students-title">Administración de estudiantes</h2><p>Registra la ficha académica, asigna empresa y tutor, y conserva el historial de cada estudiante.</p></div><button class="btn btn-primario" id="new-student" type="button">＋ Registrar estudiante</button></div>
+<form id="student-form" class="institution-form" hidden><input type="hidden" name="id"><h3 id="student-form-title">Nuevo estudiante</h3>
+<div class="institution-form-grid">
+<label>Código estudiantil<input name="codigo" required maxlength="30"></label><label>Nombre completo<input name="nombre" required minlength="2" maxlength="120"></label>
+<label>Correo institucional<input name="email" type="email" required></label><label>Teléfono<input name="telefono" maxlength="25" type="tel"></label>
+<label>Programa académico<input name="programa" required maxlength="120" value="Ingeniería de Software"></label><label>Semestre<input name="semestre" type="number" min="1" max="12" required value="1"></label>
+<label>Empresa de prácticas<select name="empresa" id="student-company"><option value="">Sin asignar</option></select></label><label>Docente / tutor<select name="tutor" id="student-tutor"><option value="">Sin asignar</option></select></label>
+<label>Estado<select name="estado"><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></label>
+</div><div class="institution-form-actions"><button class="btn btn-primario" type="submit">Guardar estudiante</button><button class="btn btn-secundario" id="cancel-student" type="button">Cancelar</button></div></form>
+<label class="institution-search">Buscar estudiante<input id="search-students" type="search" placeholder="Nombre, código o correo"></label>
+<div class="institution-table-wrap"><table class="institution-table"><thead><tr><th>Estudiante</th><th>Programa</th><th>Empresa</th><th>Docente</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="students-rows"><tr><td colspan="6">Cargando estudiantes…</td></tr></tbody></table></div><div id="students-cards" class="institution-cards"></div>
+</section>
+<section class="institution-panel" aria-labelledby="companies-title">
+<div class="institution-panel-heading"><div><p class="institution-eyebrow">RED EMPRESARIAL</p><h2 id="companies-title">Administración de empresas</h2><p>Gestiona las empresas donde se desarrollan las prácticas y sus datos de contacto.</p></div><button class="btn btn-primario" id="new-company" type="button">＋ Registrar empresa</button></div>
+<form id="company-form" class="institution-form" hidden><input type="hidden" name="id"><h3 id="company-form-title">Nueva empresa</h3>
+<div class="institution-form-grid">
+<label>Razón social<input name="razonSocial" required minlength="2" maxlength="140"></label><label>NIT<input name="nit" required maxlength="30"></label>
+<label>Sector<input name="sector" maxlength="100"></label><label>Ciudad<input name="ciudad" required maxlength="100"></label>
+<label>Dirección<input name="direccion" maxlength="180"></label><label>Persona de contacto<input name="contactoNombre" maxlength="120"></label>
+<label>Correo de contacto<input name="contactoEmail" type="email"></label><label>Teléfono<input name="telefono" type="tel" maxlength="25"></label>
+<label>Estado<select name="estado"><option value="activa">Activa</option><option value="inactiva">Inactiva</option></select></label>
+</div><div class="institution-form-actions"><button class="btn btn-primario" type="submit">Guardar empresa</button><button class="btn btn-secundario" id="cancel-company" type="button">Cancelar</button></div></form>
+<label class="institution-search">Buscar empresa<input id="search-companies" type="search" placeholder="Razón social, NIT o ciudad"></label>
+<div class="institution-table-wrap"><table class="institution-table"><thead><tr><th>Empresa</th><th>NIT</th><th>Ciudad</th><th>Contacto</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="companies-rows"><tr><td colspan="6">Cargando empresas…</td></tr></tbody></table></div><div id="companies-cards" class="institution-cards"></div>
+</section>
+<section class="institution-panel" aria-labelledby="courses-title">
+<div class="institution-panel-heading"><div><p class="institution-eyebrow">OFERTA ACADÉMICA</p><h2 id="courses-title">Estructura académica</h2><p>Administra la oferta de cursos de esta institución. Cada curso tiene sus propios módulos, docentes responsables y configuración editable.</p></div><button class="btn btn-primario" id="new-course" type="button">＋ Crear curso</button></div>
+<form id="course-form" class="institution-form" hidden><h3>Configurar nuevo curso</h3>
+<div class="institution-form-grid">
+<label>Código del curso<input name="code" required minlength="2" maxlength="40" pattern="[A-Za-z0-9_-]+" placeholder="DESWEB-01"></label>
+<label>Nombre del curso<input name="name" required minlength="2" maxlength="140" placeholder="Desarrollo Web"></label>
+<label>Número de módulos<input name="moduleCount" type="number" min="1" max="50" value="16" required><small>La cantidad es independiente para cada curso (1 a 50).</small></label>
+<label>Docentes responsables<select name="teacherUserIds" id="course-teachers" multiple size="4"><option value="">Cargando docentes…</option></select><small>Puedes seleccionar uno o varios docentes activos de esta institución.</small></label>
+<label class="institution-field-wide">Descripción<textarea name="description" rows="3" maxlength="4000" placeholder="Propósito y alcance del curso"></textarea></label>
+</div><div class="institution-form-actions"><button class="btn btn-primario" type="submit">Crear curso y módulos</button><button class="btn btn-secundario" id="cancel-course" type="button">Cancelar</button></div></form>
+<div id="courses-admin-list" class="institution-course-list"><p class="institution-empty">Cargando cursos…</p></div>
+</section>
+<p class="institution-footnote">Los registros y las asignaciones se limitan al espacio institucional seleccionado. Las cuentas de acceso y membresías se gestionan desde el módulo global de usuarios.</p>
+</main>
+<footer class="institution-footer"><b>TaskFlow</b><span>Administración académica · Espacio institucional</span><span>© 2026</span></footer>
+<script src="js/ui.js" defer></script><script src="js/institution-admin.js" defer></script><script src="js/theme.js" defer></script><script src="js/organization-switcher.js" defer></script>
+</body></html>

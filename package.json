@@ -1,0 +1,47 @@
+{
+  "name": "taskflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TaskFlow - sistema web de control y seguimiento de prácticas empresariales",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "create-admin": "node scripts/create-admin.js",
+    "test": "node --test --test-concurrency=1",
+    "audit:organizations": "node scripts/audit-organizations.js",
+    "audit:organization-indexes": "node scripts/audit-organization-indexes.js",
+    "recover:organization-lock": "node scripts/recover-organization-lock.js",
+    "smtp:verify": "node scripts/verificar-smtp.js",
+    "db:mysql:migrate": "node scripts/migrate-mysql.js",
+    "db:mysql:verify": "node scripts/verify-mysql-schema.js",
+    "db:mysql:verify-repositories": "node scripts/verify-academic-repositories.js",
+    "db:mysql:verify-courses": "node scripts/verify-course-workspaces.js",
+    "seed:academic-demo": "node scripts/seed-academic-demo.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "connect-mongo": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.2",
+    "express-session": "^1.19.0",
+    "express-validator": "^7.3.2",
+    "helmet": "^8.3.0",
+    "mongoose": "^9.11.4",
+    "morgan": "^1.12.1",
+    "multer": "^2.5.0",
+    "mysql2": "^3.24.6",
+    "nodemailer": "^10.3.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.3.1"
+  }
+}

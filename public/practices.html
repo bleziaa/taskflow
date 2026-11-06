@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prácticas | TaskFlow</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/practices.css">
+  <link rel="stylesheet" href="css/organization-switcher.css">
+  <link rel="stylesheet" href="css/student-polish.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-container">
+      <a class="logo" href="index.html"><span>TaskFlow</span></a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="menu-principal" aria-label="Abrir menú de navegación"><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span></button>
+      <nav class="nav-main" id="menu-principal" aria-label="Navegación principal"><ul class="nav-lista">
+        <li><a class="nav-link" href="dashboard.html">Mi panel</a></li>
+        <li><a class="nav-link" href="practices.html" aria-current="page">Prácticas</a></li>
+        
+        <li><a class="nav-link" href="evaluations.html">Evaluaciones</a></li>
+        <li><a class="nav-link" href="reports.html">Informes</a></li>
+        <li><a class="nav-link" id="admin-link" href="admin.html" hidden>Administración</a></li>
+        <li><span class="usuario-nombre" id="practice-user">Cargando…</span></li>
+        <li><button class="btn btn-secundario btn-sm" id="btn-logout" type="button">Cerrar sesión</button></li>
+      </ul></nav>
+    </div>
+  </header>
+  <main class="dashboard">
+    <section class="panel bloque">
+      <div class="panel-header">
+        <div><h1>Prácticas empresariales</h1><p class="panel-sub">Consulta y administra los periodos de práctica y sus responsables.</p></div>
+        <button class="btn btn-primario" id="btn-nueva" type="button" hidden>+ Nueva práctica</button>
+      </div>
+      <p id="practice-message" class="form-mensaje" role="status" aria-live="polite"></p>
+      <div id="practice-admin-form" hidden>
+        <form id="form-practice" class="formulario">
+          <h2 id="form-title">Registrar práctica</h2>
+          <input type="hidden" name="id">
+          <div class="practice-grid">
+            <div class="campo"><label for="p-estudiante">Estudiante</label><select id="p-estudiante" name="estudiante" required></select></div>
+            <div class="campo"><label for="p-empresa">Empresa</label><select id="p-empresa" name="empresa" required></select></div>
+            <div class="campo"><label for="p-tutor">Tutor</label><select id="p-tutor" name="tutor" required></select></div>
+            <div class="campo"><label for="p-titulo">Nombre de la práctica</label><input id="p-titulo" name="titulo" required minlength="3" maxlength="120" placeholder="Ej. Práctica profesional 2026"></div>
+            <div class="campo"><label for="p-inicio">Fecha de inicio</label><input id="p-inicio" name="fechaInicio" type="date" required></div>
+            <div class="campo"><label for="p-fin">Fecha de finalización</label><input id="p-fin" name="fechaFin" type="date" required></div>
+            <div class="campo"><label for="p-estado">Estado</label><select id="p-estado" name="estado"><option value="planificada">Planificada</option><option value="en_curso">En curso</option><option value="finalizada">Finalizada</option><option value="suspendida">Suspendida</option></select></div>
+            <div class="campo practice-wide"><label for="p-objetivo">Objetivo de la práctica</label><textarea id="p-objetivo" name="objetivo" rows="3" maxlength="2000"></textarea></div>
+            <div class="campo practice-wide"><label for="p-observaciones">Observaciones</label><textarea id="p-observaciones" name="observaciones" rows="3" maxlength="2000"></textarea></div>
+          </div>
+          <div class="nav-acciones"><button class="btn btn-primario" type="submit">Guardar práctica</button><button class="btn btn-secundario" id="btn-cancelar" type="button">Cancelar</button></div>
+        </form>
+      </div>
+      <div id="practice-list" class="practice-list"><p>Cargando prácticas…</p></div>
+    </section>
+  </main>
+  <script src="js/practices.js" defer></script>
+  <script src="js/ui.js" defer></script>
+  <script src="js/theme.js" defer></script>
+  <script src="js/organization-switcher.js" defer></script>
+</body>
+</html>

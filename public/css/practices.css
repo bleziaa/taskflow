@@ -1,0 +1,16 @@
+#practice-admin-form[hidden], [hidden] { display: none !important; }
+#form-practice { margin: 1.5rem 0 2rem; padding: 1.25rem; border: 1px solid var(--borde-suave); border-radius: 14px; }
+.practice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 1rem; margin: 1.2rem 0; }
+.practice-wide { grid-column: 1 / -1; }
+.practice-list { display: grid; gap: 1rem; }
+.practice-card { padding: 1.25rem; border: 1px solid var(--borde-suave); border-radius: 14px; background: var(--bg-tarjeta); }
+.practice-card h2 { font-size: 1.1rem; }
+.practice-card p { margin: .45rem 0; color: var(--texto-suave); }
+.practice-card-head { display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: .75rem; }
+.practice-status { display: inline-block; padding: .3rem .7rem; border-radius: 20px; font-size: .78rem; font-weight: 600; background: var(--primario-tenue); color: var(--primario-oscuro); }
+.status-en_curso { background: var(--exito-tenue); color: #1f7a45; }
+.status-finalizada { background: var(--bg-sutil); color: var(--texto-suave); }
+.status-suspendida { background: var(--acento-tenue); color: #8a4f10; }
+.practice-objective { padding-top: .65rem; border-top: 1px solid var(--borde-suave); }
+.practice-actions { display: flex; gap: .5rem; margin-top: 1rem; }
+@media (max-width: 640px) { .practice-wide { grid-column: auto; } .practice-card-head { align-items: flex-start; } }
