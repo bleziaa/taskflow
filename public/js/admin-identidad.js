@@ -16,7 +16,7 @@
   function currentOrg() { return orgPicker.value; }
   function baseUrl() { return scope === 'platform' ? '/api/admin/branding/platform' : '/api/admin/branding/organizations/' + encodeURIComponent(currentOrg()); }
   function setMessage(text, type='info') { message.textContent = text; message.dataset.type = type; }
-  function readForm() { return Object.fromEntries(fields.filter(f => scope === 'platform' || f !== 'primaryColor').map(f => [f, form.elements[f].value])); }
+  function readForm() { return Object.fromEntries(fields.map(f => [f, form.elements[f].value])); }
   function renderAsset(field) {
     const logo = field === 'logoUrl', img = document.getElementById(logo ? 'logo-thumb' : 'background-thumb');
     const label = document.getElementById(logo ? 'logo-filename' : 'background-filename');
@@ -34,6 +34,15 @@
   }
   function renderPreview() {
     const v = readForm();
+    const root = document.documentElement;
+    const primary = v.primaryColor || '#6d4bd1';
+    const secondary = v.secondaryColor || '#8b75dc';
+    const accent = v.accentColor || '#26a69a';
+    root.style.setProperty('--primario', primary);
+    root.style.setProperty('--primario-oscuro', secondary);
+    root.style.setProperty('--primario-tenue', 'color-mix(in srgb, ' + primary + ' 12%, transparent)');
+    root.style.setProperty('--primario-borde', 'color-mix(in srgb, ' + primary + ' 34%, transparent)');
+    root.style.setProperty('--acento', accent);
     document.getElementById('preview-name').textContent = v.displayName || 'Tu organización';
     document.getElementById('preview-welcome').textContent = v.welcomeMessage || 'Mensaje de bienvenida';
     document.getElementById('swatch-primary').style.background = v.primaryColor || '#6d4bd1';
@@ -50,7 +59,7 @@
     try {
       const data = await api(baseUrl()), branding = data.branding || {};
       fields.forEach(f => { if (form.elements[f]) form.elements[f].value = branding[f] || ({primaryColor:'#6d4bd1',secondaryColor:'#8b75dc',accentColor:'#26a69a'}[f] || ''); });
-      assets.logoUrl=branding.logoUrl || ''; assets.loginBackgroundUrl=branding.loginBackgroundUrl || '';
+      assets.logoUrl=branding.logoUrl || (scope === 'organization' && /universidad de cartagena/i.test(branding.displayName || '') ? '/media/branding/unicartagena.png' : ''); assets.loginBackgroundUrl=branding.loginBackgroundUrl || '';
       if (scope === 'organization') form.elements.primaryColor.value='#6d4bd1';
       renderPreview(); status.textContent='Configuración cargada'; setMessage('');
     } catch(e) { status.textContent='No disponible'; setMessage(e.message,'error'); }
@@ -85,7 +94,7 @@
   document.querySelectorAll('[data-scope]').forEach(button => button.addEventListener('click',async()=>{
     scope=button.dataset.scope;
     document.querySelectorAll('[data-scope]').forEach(b=>{const active=b===button;b.setAttribute('aria-selected',String(active));b.className=active?'btn btn-principal':'btn btn-secundario';});
-    pickerWrap.hidden=scope!=='organization'; primaryField.hidden=scope==='organization';
+    pickerWrap.hidden=scope!=='organization'; primaryField.hidden=false;
     if(scope==='organization'&&!organizationsLoaded) await loadOrganizations();
     await load();
   }));

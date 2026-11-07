@@ -47,10 +47,26 @@ function render() {
   head.append(el('h2', a.titulo), el('span', labels[a.estado] || a.estado)); const practice = a.practica || {};
   const meta = el('div', ''); meta.className = 'activity-meta';
   const module = (practice.estructuraAcademica || []).find((item) => String(item._id) === String(a.moduloAcademicoId));
-  meta.append(el('span', 'Práctica: ' + (practice.titulo || '—')), el('span', 'Etapa: ' + (module?.nombre || 'Sin etapa')), el('span', 'Fecha límite: ' + new Date(a.fechaLimite).toLocaleDateString('es-CO')));
+  meta.append(el('span', 'Práctica: ' + (practice.titulo || '—')), el('span', 'Etapa: ' + (module?.nombre || 'Sin etapa')),
+   el('span', 'Apertura: ' + (a.fechaInicio ? new Date(a.fechaInicio).toLocaleDateString('es-CO') : 'Inmediata')),
+   el('span', 'Entrega: ' + new Date(a.fechaLimite).toLocaleDateString('es-CO')));
   const studentName = practice.estudiante?.nombre ? ' · Estudiante: ' + practice.estudiante.nombre : '';
   const description = el('p', a.descripcion || 'Sin instrucciones adicionales.'); description.className = 'activity-description';
   card.append(head, meta, el('p', 'Tutor: ' + (practice.tutor?.nombre || '—') + studentName), description);
+  if (state.role !== 'estudiante' && Array.isArray(a.historialModificaciones) && a.historialModificaciones.length) {
+   const history = el('details', ''); history.className = 'activity-history';
+   history.append(el('summary', 'Historial de modificaciones (' + a.historialModificaciones.length + ')'));
+   a.historialModificaciones.slice().reverse().forEach((entry) => {
+    const item = el('section', ''); item.className = 'activity-history-entry';
+    const when = entry.modificadoEn ? new Date(entry.modificadoEn).toLocaleString('es-CO') : 'Fecha no disponible';
+    item.append(el('strong', when + ' · ' + (entry.modificadoPor?.nombre || 'Docente')),
+      el('p', 'Motivo: ' + (entry.motivo || 'Actualización de actividad')));
+    (entry.cambios || []).forEach((change) => item.append(el('p',
+      (change.campo || 'Campo') + ': ' + (change.valorAnterior || 'Vacío') + ' → ' + (change.valorNuevo || 'Vacío'))));
+    history.append(item);
+   });
+   card.append(history);
+  }
   if (a.recurso?.nombreOriginal) { const resource = el('a', '📄 Descargar material: ' + a.recurso.nombreOriginal); resource.href = '/api/organization/activities/' + encodeURIComponent(a._id) + '/resource/download'; resource.className = 'activity-resource-download'; resource.setAttribute('download', a.recurso.nombreOriginal); card.append(resource); }
   if (state.role !== 'estudiante') {
    const actions = el('div', ''); actions.className = 'activity-actions';
@@ -89,7 +105,7 @@ function render() {
  }));
 }
 async function load() { const data = await api('/api/organization/activities'); state.activities = data.actividades || []; render(); }
-function reset() { $('#form-activity').reset(); $('#form-activity').elements.id.value = ''; $('#a-practica').disabled = false; $('#a-modulo').disabled = false; $('#a-modulo').replaceChildren(new Option('Primero selecciona una práctica…', '')); $('#a-modulo').disabled = true; $('#activity-form-wrap').hidden = true; }
+function reset() { $('#form-activity').reset(); $('#change-reason-field').hidden = true; $('#form-activity').elements.id.value = ''; $('#a-practica').disabled = false; $('#a-modulo').disabled = false; $('#a-modulo').replaceChildren(new Option('Primero selecciona una práctica…', '')); $('#a-modulo').disabled = true; $('#activity-form-wrap').hidden = true; }
 async function showEvidences(activityId) {
  const area = $('#evidence-' + activityId); area.replaceChildren(el('p', 'Cargando entregas…'));
  try {
@@ -113,17 +129,18 @@ async function showEvidences(activityId) {
   }));
  } catch (error) { area.replaceChildren(el('p', error.message)); }
 }
-$('#btn-nueva').addEventListener('click', () => { reset(); $('#form-title').textContent = 'Registrar actividad'; $('#activity-form-wrap').hidden = false; $('#activity-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+$('#btn-nueva').addEventListener('click', () => { reset(); $('#form-title').textContent = 'Registrar actividad'; $('#change-reason-field').hidden = true; $('#activity-form-wrap').hidden = false; $('#activity-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
 $('#btn-cancelar').addEventListener('click', reset);
 
 $('#form-activity').addEventListener('submit', async (event) => {
  event.preventDefault(); const form = event.currentTarget; const formData = new FormData(form); const id = formData.get('id');
  const file = form.elements.recurso.files[0] || null;
  if (file && (file.size > 10 * 1024 * 1024 || file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf'))) { notify('Adjunta un PDF válido de máximo 10 MB.', true); return; }
- const data = { titulo: formData.get('titulo'), fechaLimite: formData.get('fechaLimite'), prioridad: formData.get('prioridad'), descripcion: formData.get('descripcion'), moduloAcademicoId: formData.get('moduloAcademicoId') || null };
+ const data = { titulo: formData.get('titulo'), fechaInicio: formData.get('fechaInicio') || null, fechaLimite: formData.get('fechaLimite'), motivoCambio: formData.get('motivoCambio') || '', prioridad: formData.get('prioridad'), descripcion: formData.get('descripcion'), moduloAcademicoId: formData.get('moduloAcademicoId') || null };
  const practiceId = $('#a-practica').value;
  if (!practiceId) { notify('Selecciona una práctica.', true); return; }
  if (!data.moduloAcademicoId) { notify('Selecciona una etapa de evaluación.', true); return; }
+ if (data.fechaInicio && data.fechaInicio > data.fechaLimite) { notify('La fecha de apertura no puede ser posterior a la fecha límite.', true); return; }
  try {
    const created = [];
    if (id) {
@@ -177,13 +194,13 @@ document.addEventListener('click', async (event) => {
  try {
   if (button.dataset.action === 'evidences') { await showEvidences(activity._id); return; }
   if (button.dataset.action === 'edit') {
-   const form = $('#form-activity'); const values = { id: activity._id, titulo: activity.titulo, fechaLimite: String(activity.fechaLimite).slice(0, 10), prioridad: activity.prioridad, descripcion: activity.descripcion };
+   const form = $('#form-activity'); const values = { id: activity._id, titulo: activity.titulo, fechaInicio: activity.fechaInicio ? String(activity.fechaInicio).slice(0, 10) : '', fechaLimite: String(activity.fechaLimite).slice(0, 10), prioridad: activity.prioridad, descripcion: activity.descripcion };
    Object.entries(values).forEach(([key, value]) => { if (form.elements.namedItem(key)) form.elements.namedItem(key).value = value || ''; });
    $('#a-practica').value = activity.practica?._id || '';
    await loadModulesForSelectedPractice();
    $('#a-modulo').value = activity.moduloAcademicoId || '';
    $('#a-practica').disabled = true; $('#a-modulo').disabled = true;
-   $('#form-title').textContent = 'Editar actividad'; $('#a-practica').disabled = true; $('#a-modulo').disabled = true; $('#activity-form-wrap').hidden = false; $('#activity-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+   $('#form-title').textContent = 'Editar actividad'; $('#change-reason-field').hidden = false; $('#a-practica').disabled = true; $('#a-modulo').disabled = true; $('#activity-form-wrap').hidden = false; $('#activity-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
   } else if (button.dataset.action === 'delete' && confirm('¿Eliminar esta actividad?')) { await mutate('/api/organization/activities/' + encodeURIComponent(activity._id), 'DELETE'); await load(); notify('Actividad eliminada.'); }
  } catch (error) { notify(error.message, true); }
 });

@@ -24,6 +24,46 @@
   // En login se conserva el tema que el HTML aplicó antes de cargar los estilos.
   // En el resto del sitio, si no hay preferencia guardada, se respeta el sistema.
   applyTheme(savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : (isLogin ? root.dataset.theme : systemTheme));
+  async function applyOrganizationBranding() {
+    if (isLogin) return;
+    try {
+      const response = await fetch('/api/organization/branding', { credentials: 'same-origin', cache: 'no-store' });
+      if (!response.ok) return;
+      const payload = await response.json();
+      const branding = payload?.data?.branding;
+      if (!branding) return;
+      const primary = /^#[0-9a-f]{6}$/i.test(branding.primaryColor || '') ? branding.primaryColor : '#6d4bd1';
+      const secondary = /^#[0-9a-f]{6}$/i.test(branding.secondaryColor || '') ? branding.secondaryColor : '#8b75dc';
+      const accent = /^#[0-9a-f]{6}$/i.test(branding.accentColor || '') ? branding.accentColor : '#26a69a';
+      root.style.setProperty('--primario', primary);
+      root.style.setProperty('--primario-oscuro', secondary);
+      root.style.setProperty('--primario-tenue', 'color-mix(in srgb, ' + primary + ' 12%, transparent)');
+      root.style.setProperty('--primario-borde', 'color-mix(in srgb, ' + primary + ' 34%, transparent)');
+      root.style.setProperty('--acento', accent);
+      root.style.setProperty('--primario-oscuro', secondary);
+      root.dataset.organizationBranding = branding.organization || 'active';
+      const brandLink = document.querySelector('.header-container .logo');
+      if (brandLink && branding.logoUrl) {
+        const image = document.createElement('img');
+        image.className = 'organization-brand-logo';
+        image.src = branding.logoUrl;
+        image.alt = branding.displayName || 'Logotipo institucional';
+        image.loading = 'eager';
+        image.decoding = 'async';
+        image.style.cssText = 'width:34px;height:34px;object-fit:contain;margin-right:9px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px';
+        image.onerror = () => image.remove();
+        const label = document.createElement('span');
+        label.textContent = branding.displayName || brandLink.textContent.trim() || 'TaskFlow';
+        brandLink.replaceChildren(image, label);
+        brandLink.style.display = 'inline-flex';
+        brandLink.style.alignItems = 'center';
+      }
+    } catch (_) {
+      // La identidad institucional no debe impedir que cargue el resto de la aplicación.
+    }
+  }
+  applyOrganizationBranding();
+
   function init() {
     const header = document.querySelector('.header-container');
     if (!header || isLogin || document.getElementById('theme-toggle')) return;

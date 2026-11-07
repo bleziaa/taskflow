@@ -18,7 +18,11 @@
     "db:mysql:verify": "node scripts/verify-mysql-schema.js",
     "db:mysql:verify-repositories": "node scripts/verify-academic-repositories.js",
     "db:mysql:verify-courses": "node scripts/verify-course-workspaces.js",
-    "seed:academic-demo": "node scripts/seed-academic-demo.js"
+    "seed:academic-demo": "node scripts/seed-academic-demo.js",
+    "seed:course-evidence-demo": "node scripts/seed-course-evidence-demo.js",
+    "seed:demo-student-accounts": "node scripts/seed-demo-student-accounts.js",
+    "seed:complete:offline": "node scripts/seed-taskflow-completo.js --target=offline",
+    "seed:complete:online": "node scripts/seed-taskflow-completo.js --target=online"
   },
   "engines": {
     "node": ">=20"

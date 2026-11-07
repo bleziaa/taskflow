@@ -40,4 +40,29 @@ async function enviarCredenciales({ nombre, email, passwordTemporal, organizacio
   }
 }
 
-module.exports = { enviarCredenciales, configuracionCompleta };
+async function enviarEnlaceRestablecimiento({ nombre, email, url }) {
+  if (!configuracionCompleta()) return { status: 'not_configured' };
+  const s = env.smtp;
+  const transporter = nodemailer.createTransport({
+    host: s.host, port: s.port, secure: s.secure,
+    auth: { user: s.user, pass: s.pass },
+    connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 15000,
+  });
+  try {
+    await transporter.sendMail({
+      from: s.from,
+      to: email,
+      subject: 'Restablece tu contraseña de TaskFlow',
+      text: `Hola ${nombre},\n\nRecibimos una solicitud para restablecer la contraseña de tu cuenta TaskFlow. Abre este enlace dentro de los próximos 30 minutos:\n${url}\n\nSi no solicitaste este cambio, ignora este mensaje. El enlace solo puede utilizarse una vez.\n`,
+      html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#24212d"><h1>Restablecer contraseña</h1><p>Hola ${escaparHtml(nombre)},</p><p>Recibimos una solicitud para cambiar la contraseña de tu cuenta TaskFlow.</p><p style="margin:28px 0"><a href="${escaparHtml(url)}" style="background:#6841b8;color:white;padding:13px 20px;border-radius:9px;text-decoration:none">Crear nueva contraseña</a></p><p>Este enlace vence en 30 minutos y solo puede utilizarse una vez.</p><p>Si no solicitaste el cambio, ignora este mensaje. Tu contraseña actual seguirá funcionando.</p></div>`,
+    });
+    return { status: 'sent' };
+  } catch (error) {
+    console.error('[email] No se pudo enviar recuperación:', error.code || error.name || 'SMTP_ERROR');
+    return { status: 'failed' };
+  } finally {
+    transporter.close();
+  }
+}
+
+module.exports = { enviarCredenciales, enviarEnlaceRestablecimiento, configuracionCompleta };

@@ -94,8 +94,8 @@ const crearCurso = asyncHandler(async (req, res) => {
   if (!/^[A-Z0-9_-]{2,40}$/.test(code) || name.length < 2 || name.length > 140) {
     throw new ApiError(400, 'Completa un código válido y un nombre de curso de al menos 2 caracteres.', { code: 'INVALID_COURSE_DATA' });
   }
-  if (!Number.isInteger(moduleCount) || moduleCount < 1 || moduleCount > 50) {
-    throw new ApiError(400, 'Cada curso debe tener entre 1 y 50 módulos.', { code: 'INVALID_MODULE_COUNT' });
+  if (moduleCount !== 4) {
+    throw new ApiError(400, 'Cada curso debe tener exactamente cuatro unidades.', { code: 'INVALID_MODULE_COUNT' });
   }
   const teacherIds = await validateTeachers(req.organization._id, req.body.teacherUserIds || []);
   const connection = await pool.getConnection();
@@ -178,8 +178,8 @@ const asignarDocente = asyncHandler(async (req, res) => {
 const guardarModulos = asyncHandler(async (req, res) => {
   const { pool, orgId, userId, role } = await courseForRequest(req, req.params.courseId, ['administrador', 'tutor']);
   const modules = req.body.modules;
-  if (!Array.isArray(modules) || modules.length < 1 || modules.length > 50) {
-    throw new ApiError(400, 'El curso debe conservar entre 1 y 50 módulos.', { code: 'INVALID_MODULES' });
+  if (!Array.isArray(modules) || modules.length !== 4) {
+    throw new ApiError(400, 'El curso debe conservar exactamente cuatro unidades.', { code: 'INVALID_MODULES' });
   }
   const normalized = modules.map((item, index) => ({
     id: item.id && validId(item.id) ? String(item.id) : id(),
@@ -201,9 +201,13 @@ const guardarModulos = asyncHandler(async (req, res) => {
       [orgId, req.params.courseId]
     );
     const currentIds = new Set(current.map(item => item.id));
-    if (role === 'tutor' && (normalized.length !== current.length || normalized.some(item => !item.id || !currentIds.has(item.id)))) {
-      throw new ApiError(403, 'El docente puede editar los nombres y descripciones, pero la cantidad de unidades la administra la institución.', { code: 'TUTOR_CANNOT_CHANGE_UNIT_COUNT' });
+    // La institución define cuántas unidades tiene el curso. El docente solo
+    // puede editar los nombres y descripciones de las unidades configuradas.
+    if (role === 'tutor' && (normalized.length !== current.length || normalized.some(item => !currentIds.has(item.id)))) {
+      throw new ApiError(403, 'La cantidad de unidades la define la institución. Puedes editar los nombres y las descripciones de las unidades ya configuradas.', { code: 'MODULE_COUNT_INSTITUTION_CONTROLLED' });
     }
+    // Para administración institucional se permite ajustar la cantidad; las unidades
+    // que ya tienen actividades no se pueden eliminar.
     if (normalized.some(item => item.id && !currentIds.has(item.id) && modules.some(source => source.id === item.id))) {
       throw new ApiError(400, 'Uno de los módulos no pertenece a este curso.', { code: 'MODULE_NOT_IN_COURSE' });
     }
@@ -269,27 +273,68 @@ const crearActividadCurso = asyncHandler(async (req, res) => {
 });
 
 const actualizarActividadCurso = asyncHandler(async (req, res) => {
-  const { pool, orgId } = await courseForRequest(req, req.params.courseId, ['administrador', 'tutor']);
+  const { pool, orgId, userId } = await courseForRequest(req, req.params.courseId, ['administrador', 'tutor']);
   if (!validId(req.params.activityId)) throw new ApiError(400, 'Identificador de actividad inválido.', { code: 'INVALID_ACTIVITY_ID' });
   const allowed = { title: 'title', description: 'description', instructions: 'instructions', status: 'status', dueAt: 'due_at', opensAt: 'opens_at', moduleId: 'module_id' };
-  const sets = []; const values = [];
-  for (const [field, column] of Object.entries(allowed)) {
-    if (req.body[field] === undefined) continue;
-    let value = req.body[field];
-    if (field === 'moduleId') {
-      if (!validId(value)) throw new ApiError(400, 'Módulo inválido.', { code: 'MODULE_REQUIRED' });
-      const [moduleRows] = await pool.execute('SELECT id FROM academic_course_modules WHERE organization_id=? AND course_id=? AND id=? AND status=\'activo\'', [orgId, req.params.courseId, value]);
-      if (!moduleRows.length) throw new ApiError(400, 'El módulo no pertenece a este curso.', { code: 'MODULE_NOT_IN_COURSE' });
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [currentRows] = await connection.execute(
+      'SELECT id, module_id, title, description, instructions, status, opens_at, due_at FROM academic_course_activities WHERE organization_id=? AND course_id=? AND id=? LIMIT 1',
+      [orgId, req.params.courseId, req.params.activityId]
+    );
+    if (!currentRows.length) throw new ApiError(404, 'No se encontró la actividad.', { code: 'COURSE_ACTIVITY_NOT_FOUND' });
+    const current = currentRows[0];
+    const nextOpen = req.body.opensAt !== undefined ? (req.body.opensAt ? new Date(req.body.opensAt) : null) : current.opens_at;
+    const nextDue = req.body.dueAt !== undefined ? (req.body.dueAt ? new Date(req.body.dueAt) : null) : current.due_at;
+    if ((nextOpen && Number.isNaN(new Date(nextOpen).getTime())) || (nextDue && Number.isNaN(new Date(nextDue).getTime())) || (nextOpen && nextDue && new Date(nextDue) < new Date(nextOpen))) {
+      throw new ApiError(400, 'La fecha de entrega no puede ser anterior a la fecha de apertura.', { code: 'INVALID_ACTIVITY_DATES' });
     }
-    if (field === 'status' && !['borrador', 'publicada', 'cerrada', 'archivada'].includes(value)) throw new ApiError(400, 'Estado de actividad inválido.', { code: 'INVALID_ACTIVITY_STATUS' });
-    if (field === 'opensAt' || field === 'dueAt') value = value ? new Date(value) : null;
-    sets.push(column + '=?'); values.push(value);
+
+    const sets = []; const values = []; const beforeValues = {}; const afterValues = {}; const changedFields = [];
+    const normalize = value => value instanceof Date ? value.toISOString() : (value == null ? null : String(value));
+    for (const [field, column] of Object.entries(allowed)) {
+      if (req.body[field] === undefined) continue;
+      let value = req.body[field];
+      if (field === 'moduleId') {
+        if (!validId(value)) throw new ApiError(400, 'Módulo inválido.', { code: 'MODULE_REQUIRED' });
+        const [moduleRows] = await connection.execute(
+          "SELECT id FROM academic_course_modules WHERE organization_id=? AND course_id=? AND id=? AND status='activo'",
+          [orgId, req.params.courseId, value]
+        );
+        if (!moduleRows.length) throw new ApiError(400, 'El módulo no pertenece a este curso.', { code: 'MODULE_NOT_IN_COURSE' });
+      }
+      if (field === 'status' && !['borrador', 'publicada', 'cerrada', 'archivada'].includes(value)) {
+        throw new ApiError(400, 'Estado de actividad inválido.', { code: 'INVALID_ACTIVITY_STATUS' });
+      }
+      if (field === 'opensAt' || field === 'dueAt') value = value ? new Date(value) : null;
+      const oldValue = current[column];
+      if (normalize(oldValue) === normalize(value)) continue;
+      sets.push(column + '=?'); values.push(value);
+      changedFields.push(field);
+      beforeValues[field] = normalize(oldValue);
+      afterValues[field] = normalize(value);
+    }
+    if (!sets.length) throw new ApiError(400, 'No hay cambios para guardar.', { code: 'EMPTY_UPDATE' });
+    values.push(orgId, req.params.courseId, req.params.activityId);
+    await connection.execute(
+      'UPDATE academic_course_activities SET ' + sets.join(', ') + ' WHERE organization_id=? AND course_id=? AND id=?',
+      values
+    );
+    await connection.execute(
+      'INSERT INTO academic_course_activity_history (id, organization_id, course_id, activity_id, actor_user_id, changed_fields, before_values, after_values) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [id(), orgId, req.params.courseId, req.params.activityId, userId,
+        JSON.stringify({ fields: changedFields, reason: String(req.body.reason || '').trim().slice(0, 500) }),
+        JSON.stringify(beforeValues), JSON.stringify(afterValues)]
+    );
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
   }
-  if (!sets.length) throw new ApiError(400, 'No hay cambios para guardar.', { code: 'EMPTY_UPDATE' });
-  values.push(orgId, req.params.courseId, req.params.activityId);
-  const [result] = await pool.execute('UPDATE academic_course_activities SET ' + sets.join(', ') + ' WHERE organization_id=? AND course_id=? AND id=?', values);
-  if (!result.affectedRows) throw new ApiError(404, 'No se encontró la actividad.', { code: 'COURSE_ACTIVITY_NOT_FOUND' });
-  res.json({ ok: true, data: { updated: true } });
+  res.json({ ok: true, data: { updated: true, historyRecorded: true } });
 });
 
 const eliminarActividadCurso = asyncHandler(async (req, res) => {

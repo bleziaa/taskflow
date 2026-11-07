@@ -27,4 +27,12 @@ const registroLimiter = rateLimit({
   handler: responderLimite,
 });
 
-module.exports = { loginLimiter, registroLimiter };
+const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  handler: responderLimite,
+});
+
+module.exports = { loginLimiter, registroLimiter, passwordResetLimiter };

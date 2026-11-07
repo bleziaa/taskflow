@@ -1,44 +1,341 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#201c2b"><title>Usuarios | TaskFlow</title><link rel="stylesheet" href="css/styles.css"><link rel="stylesheet" href="css/theme.css"><link rel="stylesheet" href="css/admin.css">
-  <link rel="stylesheet" href="css/admin-polish.css"></head>
-<body>
-<header class="header"><div class="header-container"><a class="logo" href="admin.html"><span>TaskFlow</span></a><nav class="nav-main"><ul class="nav-lista"><li><a class="nav-link" href="admin.html">Centro de control</a></li><li><a class="nav-link" href="admin-organizaciones.html">Organizaciones</a></li><li><a class="nav-link" href="admin-usuarios.html" aria-current="page">Usuarios</a></li><li><a class="nav-link" href="admin-identidad.html">Identidad visual</a></li><li><span class="usuario-nombre" id="admin-nombre">Administrador general</span></li><li><button class="btn btn-secundario btn-sm" id="btn-logout" type="button">Cerrar sesión</button></li></ul></nav></div></header>
-<main class="admin-page">
-<a class="admin-volver" href="admin.html">← <span>Centro de control</span></a>
-<section class="admin-hero"><div><span class="admin-eyebrow">Control de acceso · 02</span><h1>Usuarios y administradores</h1><p class="panel-sub">Gestiona cuentas globales y asigna roles diferentes dentro de cada institución.</p></div><div class="admin-hero-actions"><span class="admin-status" id="estado-modulo">Conectando…</span><button class="btn btn-primario" id="btn-nuevo-usuario" type="button">+ Crear cuenta</button></div></section>
-<section class="admin-metricas">
-<article class="admin-metrica"><span>Cuentas registradas</span><strong id="metric-cuentas">—</strong><small>Identidades globales</small></article>
-<article class="admin-metrica"><span>Administradores institucionales</span><strong id="metric-admins">—</strong><small>Asignaciones activas</small></article>
-<article class="admin-metrica"><span>Organizaciones</span><strong id="metric-organizaciones">—</strong><small>Espacios institucionales</small></article>
-</section>
-<section class="admin-surface" id="panel-crear-usuario" hidden>
-<div class="admin-section-head"><div><h2>Nueva cuenta</h2><p>La cuenta se crea vinculada a una institución. Si el correo saliente está configurado, TaskFlow enviará las credenciales automáticamente; de lo contrario podrás copiar la contraseña temporal y entregarla por un canal seguro.</p></div></div>
-<form id="form-usuario" class="admin-form-grid">
-<label>Nombre completo<input name="nombre" minlength="2" maxlength="80" required></label>
-<label>Correo electrónico<input name="email" type="email" maxlength="254" required></label>
-<label>Tipo de cuenta<select name="role" required><option value="estudiante">Estudiante</option><option value="tutor">Docente / tutor</option></select><small>Define el tipo de identidad global.</small></label>
-<label>Institución<select name="organizationId" id="crear-organizacion" required><option value="">Selecciona una institución activa</option></select></label>
-<label>Rol dentro de la institución<select name="membershipRole" required><option value="estudiante">Estudiante</option><option value="tutor">Docente / tutor</option><option value="administrador">Administrador institucional</option></select><small>Este rol controla únicamente esta institución.</small></label>
-<div class="admin-form-actions"><button class="btn btn-secundario" id="btn-cancelar-usuario" type="button">Cancelar</button><button class="btn btn-primario" type="submit">Crear cuenta</button></div>
-</form><section id="credenciales-temporales" class="admin-credenciales" hidden aria-live="polite"><h3 id="resultado-alta-titulo">Cuenta creada correctamente</h3><p id="resultado-alta-mensaje">Entrega esta contraseña temporal al usuario por un canal seguro.</p><label id="campo-password-temporal">Contraseña temporal<input id="password-temporal" type="text" readonly autocomplete="off"></label><button class="btn btn-secundario" id="copiar-password-temporal" type="button">Copiar contraseña</button><button class="btn btn-primario" id="cerrar-credenciales" type="button">Cerrar</button></section></section>
-<div class="admin-section-head"><div><h2>Directorio de cuentas</h2><p>El rol global no sustituye el rol que una persona tiene en cada organización.</p></div></div>
-<section class="admin-surface">
-<div class="admin-toolbar"><input id="buscar-usuario" type="search" placeholder="Buscar por nombre o correo…"><select id="filtro-rol"><option value="">Todos los roles</option><option value="tutor">Tutor</option><option value="estudiante">Estudiante</option></select></div>
-<div id="lista-usuarios"><div class="admin-vacio"><h3>Cargando cuentas…</h3></div></div>
-</section>
-<section class="admin-surface" id="panel-detalle-usuario" hidden>
-<div class="admin-section-head"><div><h2 id="detalle-nombre">Cuenta</h2><p id="detalle-correo"></p></div><button class="btn btn-secundario btn-sm" id="btn-cerrar-detalle" type="button">Cerrar</button></div>
-<div class="admin-inline-form">
-<label>Organización<select id="asignar-organizacion" required><option value="">Selecciona una organización</option></select></label>
-<label>Rol institucional<select id="asignar-rol"><option value="administrador">Administrador institucional</option><option value="tutor">Docente / tutor</option><option value="estudiante">Estudiante</option></select></label>
-<button class="btn btn-primario" id="btn-asignar" type="button">Asignar a organización</button>
-</div>
-<section id="panel-password-temporal" class="admin-credenciales" hidden aria-live="polite"><h3>Contraseña temporal generada</h3><p>Entrégala al titular por un canal seguro. Solo se muestra esta vez; al iniciar sesión deberá establecer una contraseña nueva.</p><label>Contraseña temporal<input id="reset-password-temporal" type="text" readonly autocomplete="off"></label><button class="btn btn-secundario" id="copiar-reset-password" type="button">Copiar contraseña</button><button class="btn btn-secundario" id="cerrar-reset-password" type="button">Ocultar</button></section>
-<div class="admin-form-actions"><button class="btn btn-secundario" id="btn-restablecer-password" type="button">Restablecer contraseña</button></div>
-<div class="admin-section-head"><div><h3>Membresías institucionales</h3><p>Una misma cuenta puede tener roles distintos en diferentes instituciones.</p></div></div>
-<div id="tabla-membresias"></div>
-</section>
-<div class="admin-nota"><span class="admin-nota-icon">i</span><div><strong>Separación de permisos</strong><br>El administrador general conserva el control global de la plataforma. Los administradores institucionales gestionan únicamente su organización, y las operaciones académicas se filtran por la membresía y la institución activa.</div></div>
-<p id="admin-mensaje" class="form-mensaje" role="status" aria-live="polite"></p>
-</main><script src="js/admin-shell.js" defer></script><script src="js/theme.js" defer></script><script src="js/admin-usuarios.js" defer></script></body></html>
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <meta content="#201c2b" name="theme-color"/>
+  <title>
+   Usuarios | TaskFlow
+  </title>
+  <link href="css/styles.css?v=20261106f" rel="stylesheet"/>
+  <link href="css/theme.css" rel="stylesheet"/>
+  <link href="css/admin.css" rel="stylesheet"/>
+  <link href="css/admin-polish.css" rel="stylesheet"/>
+  <link href="css/ui-compact.css?v=20261106i" rel="stylesheet"/>
+ </head>
+ <body>
+  <header class="header">
+   <div class="header-container">
+    <a class="logo" href="admin.html">
+     <span>
+      TaskFlow
+     </span>
+    </a>
+    <nav class="nav-main">
+     <ul class="nav-lista">
+      <li>
+       <a class="nav-link" href="admin.html">
+        Centro de control
+       </a>
+      </li>
+      <li>
+       <a class="nav-link" href="admin-organizaciones.html">
+        Organizaciones
+       </a>
+      </li>
+      <li>
+       <a aria-current="page" class="nav-link" href="admin-usuarios.html">
+        Usuarios
+       </a>
+      </li>
+      <li>
+       <a class="nav-link" href="admin-identidad.html">
+        Identidad visual
+       </a>
+      </li>
+      <li>
+       <span class="usuario-nombre" id="admin-nombre">
+        Administrador general
+       </span>
+      </li>
+      <li>
+       <button class="btn btn-secundario btn-sm" id="btn-logout" type="button">
+        Cerrar sesión
+       </button>
+      </li>
+     </ul>
+    </nav>
+   </div>
+  </header>
+  <main class="admin-page">
+   <a class="admin-volver" href="admin.html">
+    ←
+    <span>
+     Centro de control
+    </span>
+   </a>
+   <section class="admin-hero">
+    <div>
+     <span class="admin-eyebrow">
+      Control de acceso · 02
+     </span>
+     <h1>
+      Usuarios y administradores
+     </h1>
+     <p class="panel-sub">
+      Gestiona cuentas globales y asigna roles diferentes dentro de cada institución.
+     </p>
+    </div>
+    <div class="admin-hero-actions">
+     <span class="admin-status" id="estado-modulo">
+      Conectando…
+     </span>
+     <button class="btn btn-primario" id="btn-nuevo-usuario" type="button">
+      + Crear cuenta
+     </button>
+    </div>
+   </section>
+   <section class="admin-metricas">
+    <article class="admin-metrica">
+     <span>
+      Cuentas registradas
+     </span>
+     <strong id="metric-cuentas">
+      —
+     </strong>
+     <small>
+      Identidades globales
+     </small>
+    </article>
+    <article class="admin-metrica">
+     <span>
+      Administradores institucionales
+     </span>
+     <strong id="metric-admins">
+      —
+     </strong>
+     <small>
+      Asignaciones activas
+     </small>
+    </article>
+    <article class="admin-metrica">
+     <span>
+      Organizaciones
+     </span>
+     <strong id="metric-organizaciones">
+      —
+     </strong>
+     <small>
+      Espacios institucionales
+     </small>
+    </article>
+   </section>
+   <section class="admin-surface" hidden="" id="panel-crear-usuario">
+    <div class="admin-section-head">
+     <div>
+      <h2>
+       Nueva cuenta
+      </h2>
+      <p>
+       La cuenta se crea vinculada a una institución. Si el correo saliente está configurado, TaskFlow enviará las credenciales automáticamente; de lo contrario podrás copiar la contraseña temporal y entregarla por un canal seguro.
+      </p>
+     </div>
+    </div>
+    <form class="admin-form-grid" id="form-usuario">
+     <label>
+      Nombre completo
+      <input maxlength="80" minlength="2" name="nombre" required=""/>
+     </label>
+     <label>
+      Correo electrónico
+      <input maxlength="254" name="email" required="" type="email"/>
+     </label>
+     <label>
+      Tipo de cuenta
+      <select name="role" required="">
+       <option value="estudiante">
+        Estudiante
+       </option>
+       <option value="tutor">
+        Docente / tutor
+       </option>
+      </select>
+      <small>
+       Define el tipo de identidad global.
+      </small>
+     </label>
+     <label>
+      Institución
+      <select id="crear-organizacion" name="organizationId" required="">
+       <option value="">
+        Selecciona una institución activa
+       </option>
+      </select>
+     </label>
+     <label>
+      Rol dentro de la institución
+      <select name="membershipRole" required="">
+       <option value="estudiante">
+        Estudiante
+       </option>
+       <option value="tutor">
+        Docente / tutor
+       </option>
+       <option value="administrador">
+        Administrador institucional
+       </option>
+      </select>
+      <small>
+       Este rol controla únicamente esta institución.
+      </small>
+     </label>
+     <div class="admin-form-actions">
+      <button class="btn btn-secundario" id="btn-cancelar-usuario" type="button">
+       Cancelar
+      </button>
+      <button class="btn btn-primario" type="submit">
+       Crear cuenta
+      </button>
+     </div>
+    </form>
+    <section aria-live="polite" class="admin-credenciales" hidden="" id="credenciales-temporales">
+     <h3 id="resultado-alta-titulo">
+      Cuenta creada correctamente
+     </h3>
+     <p id="resultado-alta-mensaje">
+      Entrega esta contraseña temporal al usuario por un canal seguro.
+     </p>
+     <label id="campo-password-temporal">
+      Contraseña temporal
+      <input autocomplete="off" id="password-temporal" readonly="" type="text"/>
+     </label>
+     <button class="btn btn-secundario" id="copiar-password-temporal" type="button">
+      Copiar contraseña
+     </button>
+     <button class="btn btn-primario" id="cerrar-credenciales" type="button">
+      Cerrar
+     </button>
+    </section>
+   </section>
+   <div class="admin-section-head">
+    <div>
+     <h2>
+      Directorio de cuentas
+     </h2>
+     <p>
+      El rol global no sustituye el rol que una persona tiene en cada organización.
+     </p>
+    </div>
+   </div>
+   <section class="admin-surface">
+    <div class="admin-toolbar">
+     <input id="buscar-usuario" placeholder="Buscar por nombre o correo…" type="search"/>
+     <select id="filtro-rol">
+      <option value="">
+       Todos los roles
+      </option>
+      <option value="tutor">
+       Tutor
+      </option>
+      <option value="estudiante">
+       Estudiante
+      </option>
+     </select>
+    </div>
+    <div id="lista-usuarios">
+     <div class="admin-vacio">
+      <h3>
+       Cargando cuentas…
+      </h3>
+     </div>
+    </div>
+   </section>
+   <section class="admin-surface" hidden="" id="panel-detalle-usuario">
+    <div class="admin-section-head">
+     <div>
+      <h2 id="detalle-nombre">
+       Cuenta
+      </h2>
+      <p id="detalle-correo">
+      </p>
+     </div>
+     <button class="btn btn-secundario btn-sm" id="btn-cerrar-detalle" type="button">
+      Cerrar
+     </button>
+    </div>
+    <div class="admin-inline-form">
+     <label>
+      Organización
+      <select id="asignar-organizacion" required="">
+       <option value="">
+        Selecciona una organización
+       </option>
+      </select>
+     </label>
+     <label>
+      Rol institucional
+      <select id="asignar-rol">
+       <option value="administrador">
+        Administrador institucional
+       </option>
+       <option value="tutor">
+        Docente / tutor
+       </option>
+       <option value="estudiante">
+        Estudiante
+       </option>
+      </select>
+     </label>
+     <button class="btn btn-primario" id="btn-asignar" type="button">
+      Asignar a organización
+     </button>
+    </div>
+    <section aria-live="polite" class="admin-credenciales" hidden="" id="panel-password-temporal">
+     <h3>
+      Contraseña temporal generada
+     </h3>
+     <p>
+      Entrégala al titular por un canal seguro. Solo se muestra esta vez; al iniciar sesión deberá establecer una contraseña nueva.
+     </p>
+     <label>
+      Contraseña temporal
+      <input autocomplete="off" id="reset-password-temporal" readonly="" type="text"/>
+     </label>
+     <button class="btn btn-secundario" id="copiar-reset-password" type="button">
+      Copiar contraseña
+     </button>
+     <button class="btn btn-secundario" id="cerrar-reset-password" type="button">
+      Ocultar
+     </button>
+    </section>
+    <div class="admin-form-actions">
+     <button class="btn btn-secundario" id="btn-restablecer-password" type="button">
+      Restablecer contraseña
+     </button>
+    </div>
+    <div class="admin-section-head">
+     <div>
+      <h3>
+       Membresías institucionales
+      </h3>
+      <p>
+       Una misma cuenta puede tener roles distintos en diferentes instituciones.
+      </p>
+     </div>
+    </div>
+    <div id="tabla-membresias">
+    </div>
+   </section>
+   <div class="admin-nota">
+    <span class="admin-nota-icon">
+     i
+    </span>
+    <div>
+     <strong>
+      Separación de permisos
+     </strong>
+     <br/>
+     El administrador general conserva el control global de la plataforma. Los administradores institucionales gestionan únicamente su organización, y las operaciones académicas se filtran por la membresía y la institución activa.
+    </div>
+   </div>
+   <p aria-live="polite" class="form-mensaje" id="admin-mensaje" role="status">
+   </p>
+  </main>
+  <script defer="" src="js/admin-shell.js">
+  </script>
+  <script defer="" src="js/theme.js">
+  </script>
+  <script defer="" src="js/admin-usuarios.js">
+  </script>
+ </body>
+</html>

@@ -1,12 +1,31 @@
 const bcrypt = require('bcryptjs');
-const { randomBytes } = require('node:crypto');
+const crypto = require('node:crypto');
+const { randomBytes } = crypto;
 const User = require('../models/User');
 const Student = require('../models/Student');
 const Membership = require('../models/OrganizationMembership');
 const Organization = require('../models/Organization');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
-const { enviarCredenciales } = require('../services/email.service');
+const PasswordResetToken = require('../models/PasswordResetToken');
+const { enviarEnlaceRestablecimiento } = require('../services/email.service');
+const { env } = require('../config/env');
+
+async function enviarEnlaceDeAcceso(usuario) {
+  const token = randomBytes(32).toString('base64url');
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  await PasswordResetToken.deleteMany({ user: usuario._id, usedAt: null });
+  await PasswordResetToken.create({ user: usuario._id, tokenHash, expiresAt: new Date(Date.now() + 30 * 60 * 1000) });
+  const configuredUrl = String(env.publicUrl || 'http://127.0.0.1:3000');
+  const baseUrl = configuredUrl.endsWith('/') ? configuredUrl.slice(0, -1) : configuredUrl;
+  const resultado = await enviarEnlaceRestablecimiento({
+    nombre: usuario.nombre,
+    email: usuario.email,
+    url: `${baseUrl}/restablecer-password.html?token=${encodeURIComponent(token)}`,
+  });
+  if (resultado.status !== 'sent') await PasswordResetToken.deleteOne({ tokenHash });
+  return resultado;
+}
 
 const listarUsuarios = asyncHandler(async (req, res) => {
   const filtro = { role: { $in: ['tutor', 'estudiante'] } };
@@ -51,9 +70,9 @@ const crearUsuario = asyncHandler(async (req, res) => {
     if (error.code === 11000) throw new ApiError(409, 'Ya existe una cuenta o asignación con esos datos.', { code: 'EMAIL_IN_USE' });
     throw error;
   }
-  const correoResultado = await enviarCredenciales({ nombre: usuario.nombre, email: usuario.email, passwordTemporal, organizacion: organizacion.nombre });
+  const correoResultado = await enviarEnlaceDeAcceso(usuario);
   const data = { usuario: usuario.toJSON(), membresia: { _id: membresia._id, role: membresia.role }, organizacion: { _id: organizacion._id, nombre: organizacion.nombre, codigo: organizacion.codigo }, correo: correoResultado };
-  // Solo devolver la clave al administrador cuando no se pudo entregar por correo.
+  // Si SMTP no está disponible, el administrador conserva una vía de acceso temporal.
   if (correoResultado.status !== 'sent') data.credenciales = { passwordTemporal };
   res.status(201).json({ ok: true, data });
 });
@@ -78,7 +97,10 @@ const restablecerPassword = asyncHandler(async (req, res) => {
   usuario.passwordHash = await bcrypt.hash(passwordTemporal, 12);
   usuario.debeCambiarPassword = true;
   await usuario.save();
-  res.json({ ok: true, data: { usuario: usuario.toJSON(), credenciales: { passwordTemporal } } });
+  const correo = await enviarEnlaceDeAcceso(usuario);
+  const data = { usuario: usuario.toJSON(), correo };
+  if (correo.status !== 'sent') data.credenciales = { passwordTemporal };
+  res.json({ ok: true, data });
 });
 
 const eliminarUsuario = asyncHandler(async (req, res) => {

@@ -4,8 +4,7 @@ const Organization = require('../models/Organization');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 
-const FIELDS = ['displayName', 'welcomeMessage', 'logoUrl', 'logoAlt', 'secondaryColor', 'accentColor', 'loginBackgroundUrl'];
-const PLATFORM_FIELDS = [...FIELDS, 'primaryColor'];
+const FIELDS = ['displayName', 'welcomeMessage', 'logoUrl', 'logoAlt', 'primaryColor', 'secondaryColor', 'accentColor', 'loginBackgroundUrl'];
 const DEFAULTS = {
   displayName: 'TaskFlow', welcomeMessage: 'Organiza y acompaña tus prácticas.',
   logoUrl: '', logoAlt: 'Logotipo de TaskFlow', primaryColor: '#6d4bd1',
@@ -13,6 +12,7 @@ const DEFAULTS = {
 };
 function cleanUrl(value, field) {
   if (!value) return '';
+  if (typeof value === 'string' && /^\/media\/branding\/[a-f0-9-]+\.(?:jpg|png|webp)$/i.test(value)) return value;
   let parsed;
   try { parsed = new URL(value); } catch (_) { throw new ApiError(400, field + ' debe ser una URL válida.', { code: 'BRANDING_INVALID_URL' }); }
   if (!['https:', 'http:'].includes(parsed.protocol)) throw new ApiError(400, field + ' solo admite HTTP o HTTPS.', { code: 'BRANDING_INVALID_URL' });
@@ -20,7 +20,7 @@ function cleanUrl(value, field) {
 }
 function cleanPayload(body, scope) {
   const data = {};
-  const allowed = scope === 'platform' ? PLATFORM_FIELDS : FIELDS;
+  const allowed = FIELDS;
   for (const field of allowed) if (Object.prototype.hasOwnProperty.call(body, field)) data[field] = body[field];
   for (const field of ['displayName', 'welcomeMessage', 'logoUrl', 'logoAlt', 'secondaryColor', 'accentColor', 'loginBackgroundUrl']) {
     if (data[field] !== undefined && typeof data[field] !== 'string') throw new ApiError(400, 'El campo ' + field + ' debe ser texto.', { code: 'BRANDING_INVALID_FIELD' });
@@ -32,9 +32,22 @@ function cleanPayload(body, scope) {
   for (const field of ['logoUrl', 'loginBackgroundUrl']) if (data[field] !== undefined) data[field] = cleanUrl(data[field], field);
   return data;
 }
+function organizationPalette(name = '') {
+  const normalized = String(name).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  if (normalized.includes('universidad de cartagena')) return { primaryColor: '#027f3e', secondaryColor: '#015b2d', accentColor: '#f7f028' };
+  if (normalized.includes('universidad nacional')) return { primaryColor: '#009638', secondaryColor: '#006b2c', accentColor: '#f3ae00' };
+  return {};
+}
 async function get(scope, organization = null, fallbackName = '') {
   const saved = await Branding.findOne({ scope, organization }).lean();
-  return { ...DEFAULTS, ...(saved || {}), ...(saved ? {} : (fallbackName ? { displayName: fallbackName } : {})), scope, organization: organization ? String(organization) : null };
+  const palette = scope === 'organization' ? organizationPalette(fallbackName) : {};
+  const branding = { ...DEFAULTS, ...palette, ...(saved || {}) };
+  for (const field of ['primaryColor', 'secondaryColor', 'accentColor']) {
+    const defaultValue = DEFAULTS[field];
+    if (palette[field] && (!saved?.[field] || saved[field] === defaultValue)) branding[field] = palette[field];
+  }
+  if (!saved && fallbackName) branding.displayName = fallbackName;
+  return { ...branding, scope, organization: organization ? String(organization) : null };
 }
 const obtenerGlobal = asyncHandler(async (_req, res) => res.json({ ok: true, data: { branding: await get('platform') } }));
 const guardarGlobal = asyncHandler(async (req, res) => {

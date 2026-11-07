@@ -1,16 +1,251 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#201c2b"><title>Identidad visual | TaskFlow</title><link rel="stylesheet" href="css/styles.css"><link rel="stylesheet" href="css/theme.css"><link rel="stylesheet" href="css/admin.css">
-  <link rel="stylesheet" href="css/admin-polish.css"></head><body>
-<header class="header"><div class="header-container"><a class="logo" href="admin.html"><span>TaskFlow</span></a><nav class="nav-main"><ul class="nav-lista"><li><a class="nav-link" href="admin.html">Centro de control</a></li><li><a class="nav-link" href="admin-organizaciones.html">Organizaciones</a></li><li><a class="nav-link" href="admin-usuarios.html">Usuarios</a></li><li><a class="nav-link" href="admin-identidad.html" aria-current="page">Identidad visual</a></li><li><span class="usuario-nombre" id="admin-nombre">Administrador general</span></li><li><button class="btn btn-secundario btn-sm" id="btn-logout" type="button">Cerrar sesión</button></li></ul></nav></div></header>
-<main class="admin-page"><a class="admin-volver" href="admin.html">← <span>Centro de control</span></a><section class="admin-hero"><div><span class="admin-eyebrow">Sistema de marca · 03</span><h1>Identidad visual</h1><p class="panel-sub">Personaliza la marca de TaskFlow y la apariencia de cada institución.</p></div><div class="admin-hero-actions"><span class="admin-status" id="branding-status">Cargando configuración</span></div></section>
-<div class="branding-tabs" role="tablist" aria-label="Tipo de identidad"><button class="btn btn-principal" type="button" data-scope="platform" aria-selected="true">Marca global</button><button class="btn btn-secundario" type="button" data-scope="organization" aria-selected="false">Identidad institucional</button></div>
-<section class="admin-surface"><div id="org-picker-wrap" hidden><label class="admin-field">Organización<select id="branding-org"><option value="">Selecciona una organización</option></select></label><p class="branding-help">El morado principal de TaskFlow se conserva en todas las instituciones.</p></div>
-<form id="branding-form"><div class="branding-layout"><div class="branding-fields"><div class="admin-form-grid">
-<label class="admin-field">Nombre visible<input name="displayName" maxlength="80" required></label><label class="admin-field">Mensaje de bienvenida<input name="welcomeMessage" maxlength="240"></label>
-<div class="admin-field admin-field-wide"><span class="branding-label">Logotipo</span><label class="branding-upload" for="logo-file"><span class="branding-upload-icon">↑</span><span><strong>Subir logotipo</strong><small>JPG, PNG o WEBP · máximo 10 MB</small></span><input id="logo-file" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><div class="branding-asset-row"><img id="logo-thumb" alt="Vista previa del logotipo" hidden><span id="logo-filename">Sin imagen seleccionada</span><button class="btn btn-secundario btn-sm" type="button" data-remove="logoUrl">Quitar</button></div></div>
-<label class="admin-field admin-field-wide">Texto alternativo del logotipo<input name="logoAlt" maxlength="120"></label><div class="admin-field" id="primary-field">Color principal<input name="primaryColor" type="color" value="#6d4bd1"></div><label class="admin-field">Color secundario<input name="secondaryColor" type="color" value="#8b75dc"></label><label class="admin-field">Color de acento<input name="accentColor" type="color" value="#26a69a"></label>
-<div class="admin-field admin-field-wide"><span class="branding-label">Fondo de inicio de sesión</span><label class="branding-upload" for="background-file"><span class="branding-upload-icon">↑</span><span><strong>Subir imagen de fondo</strong><small>JPG, PNG o WEBP · máximo 10 MB</small></span><input id="background-file" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><div class="branding-asset-row"><img id="background-thumb" alt="Vista previa del fondo" hidden><span id="background-filename">Sin imagen seleccionada</span><button class="btn btn-secundario btn-sm" type="button" data-remove="loginBackgroundUrl">Quitar</button></div></div>
-</div><div class="admin-form-actions"><button class="btn btn-principal" type="submit" id="branding-save">Guardar identidad</button><button class="btn btn-secundario" type="button" id="branding-reload">Descartar cambios</button></div></div>
-<aside class="branding-preview" id="branding-preview"><span class="branding-preview-kicker">VISTA PREVIA</span><div class="branding-preview-logo" id="preview-logo">T</div><h2 id="preview-name">TaskFlow</h2><p id="preview-welcome">Organiza y acompaña tus prácticas.</p><div class="branding-swatches"><i id="swatch-primary"></i><i id="swatch-secondary"></i><i id="swatch-accent"></i></div><span class="branding-preview-foot">Así se verá la identidad seleccionada</span></aside></div></form></section>
-<div class="admin-nota"><span class="admin-nota-icon">i</span><div><strong>Imágenes y almacenamiento</strong><br>Las imágenes se suben directamente desde tu equipo. En desarrollo se guardan localmente; en producción se utiliza almacenamiento Cloudinary. MongoDB conserva sus referencias y metadatos, no los archivos binarios. Límite: 10 MB por imagen.</div></div><p id="admin-mensaje" class="form-mensaje" role="status" aria-live="polite"></p></main>
-<script src="js/admin-shell.js" defer></script><script src="js/theme.js" defer></script><script src="js/admin-identidad.js" defer></script></body></html>
+<html lang="es">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <meta content="#201c2b" name="theme-color"/>
+  <title>
+   Identidad visual | TaskFlow
+  </title>
+  <link href="css/styles.css?v=20261106f" rel="stylesheet"/>
+  <link href="css/theme.css" rel="stylesheet"/>
+  <link href="css/admin.css" rel="stylesheet"/>
+  <link href="css/admin-polish.css" rel="stylesheet"/>
+  <link href="css/ui-compact.css?v=20261106i" rel="stylesheet"/>
+ </head>
+ <body>
+  <header class="header">
+   <div class="header-container">
+    <a class="logo" href="admin.html">
+     <span>
+      TaskFlow
+     </span>
+    </a>
+    <nav class="nav-main">
+     <ul class="nav-lista">
+      <li>
+       <a class="nav-link" href="admin.html">
+        Centro de control
+       </a>
+      </li>
+      <li>
+       <a class="nav-link" href="admin-organizaciones.html">
+        Organizaciones
+       </a>
+      </li>
+      <li>
+       <a class="nav-link" href="admin-usuarios.html">
+        Usuarios
+       </a>
+      </li>
+      <li>
+       <a aria-current="page" class="nav-link" href="admin-identidad.html">
+        Identidad visual
+       </a>
+      </li>
+      <li>
+       <span class="usuario-nombre" id="admin-nombre">
+        Administrador general
+       </span>
+      </li>
+      <li>
+       <button class="btn btn-secundario btn-sm" id="btn-logout" type="button">
+        Cerrar sesión
+       </button>
+      </li>
+     </ul>
+    </nav>
+   </div>
+  </header>
+  <main class="admin-page">
+   <a class="admin-volver" href="admin.html">
+    ←
+    <span>
+     Centro de control
+    </span>
+   </a>
+   <section class="admin-hero">
+    <div>
+     <span class="admin-eyebrow">
+      Sistema de marca · 03
+     </span>
+     <h1>
+      Identidad visual
+     </h1>
+     <p class="panel-sub">
+      Personaliza la marca de TaskFlow y la apariencia de cada institución.
+     </p>
+    </div>
+    <div class="admin-hero-actions">
+     <span class="admin-status" id="branding-status">
+      Cargando configuración
+     </span>
+    </div>
+   </section>
+   <div aria-label="Tipo de identidad" class="branding-tabs" role="tablist">
+    <button aria-selected="true" class="btn btn-principal" data-scope="platform" type="button">
+     Marca global
+    </button>
+    <button aria-selected="false" class="btn btn-secundario" data-scope="organization" type="button">
+     Identidad institucional
+    </button>
+   </div>
+   <section class="admin-surface">
+    <div hidden="" id="org-picker-wrap">
+     <label class="admin-field">
+      Organización
+      <select id="branding-org">
+       <option value="">
+        Selecciona una organización
+       </option>
+      </select>
+     </label>
+     <p class="branding-help">
+      La paleta institucional seleccionada se aplica en toda la interfaz de esa organización.
+     </p>
+    </div>
+    <form id="branding-form">
+     <div class="branding-layout">
+      <div class="branding-fields">
+       <div class="admin-form-grid">
+        <label class="admin-field">
+         Nombre visible
+         <input maxlength="80" name="displayName" required=""/>
+        </label>
+        <label class="admin-field">
+         Mensaje de bienvenida
+         <input maxlength="240" name="welcomeMessage"/>
+        </label>
+        <div class="admin-field admin-field-wide">
+         <span class="branding-label">
+          Logotipo
+         </span>
+         <label class="branding-upload" for="logo-file">
+          <span class="branding-upload-icon">
+           ↑
+          </span>
+          <span>
+           <strong>
+            Subir logotipo
+           </strong>
+           <small>
+            JPG, PNG o WEBP · máximo 10 MB
+           </small>
+          </span>
+          <input accept="image/jpeg,image/png,image/webp" hidden="" id="logo-file" type="file"/>
+         </label>
+         <div class="branding-asset-row">
+          <img alt="Vista previa del logotipo" hidden="" id="logo-thumb"/>
+          <span id="logo-filename">
+           Sin imagen seleccionada
+          </span>
+          <button class="btn btn-secundario btn-sm" data-remove="logoUrl" type="button">
+           Quitar
+          </button>
+         </div>
+        </div>
+        <label class="admin-field admin-field-wide">
+         Texto alternativo del logotipo
+         <input maxlength="120" name="logoAlt"/>
+        </label>
+        <div class="admin-field" id="primary-field">
+         Color principal
+         <input name="primaryColor" type="color" value="#6d4bd1"/>
+        </div>
+        <label class="admin-field">
+         Color secundario
+         <input name="secondaryColor" type="color" value="#8b75dc"/>
+        </label>
+        <label class="admin-field">
+         Color de acento
+         <input name="accentColor" type="color" value="#26a69a"/>
+        </label>
+        <div class="admin-field admin-field-wide">
+         <span class="branding-label">
+          Fondo de inicio de sesión
+         </span>
+         <label class="branding-upload" for="background-file">
+          <span class="branding-upload-icon">
+           ↑
+          </span>
+          <span>
+           <strong>
+            Subir imagen de fondo
+           </strong>
+           <small>
+            JPG, PNG o WEBP · máximo 10 MB
+           </small>
+          </span>
+          <input accept="image/jpeg,image/png,image/webp" hidden="" id="background-file" type="file"/>
+         </label>
+         <div class="branding-asset-row">
+          <img alt="Vista previa del fondo" hidden="" id="background-thumb"/>
+          <span id="background-filename">
+           Sin imagen seleccionada
+          </span>
+          <button class="btn btn-secundario btn-sm" data-remove="loginBackgroundUrl" type="button">
+           Quitar
+          </button>
+         </div>
+        </div>
+       </div>
+       <div class="admin-form-actions">
+        <button class="btn btn-principal" id="branding-save" type="submit">
+         Guardar identidad
+        </button>
+        <button class="btn btn-secundario" id="branding-reload" type="button">
+         Descartar cambios
+        </button>
+       </div>
+      </div>
+      <aside class="branding-preview" id="branding-preview">
+       <span class="branding-preview-kicker">
+        VISTA PREVIA
+       </span>
+       <div class="branding-preview-logo" id="preview-logo">
+        T
+       </div>
+       <h2 id="preview-name">
+        TaskFlow
+       </h2>
+       <p id="preview-welcome">
+        Organiza y acompaña tus prácticas.
+       </p>
+       <div class="branding-swatches">
+        <i id="swatch-primary">
+        </i>
+        <i id="swatch-secondary">
+        </i>
+        <i id="swatch-accent">
+        </i>
+       </div>
+       <span class="branding-preview-foot">
+        Así se verá la identidad seleccionada
+       </span>
+      </aside>
+     </div>
+    </form>
+   </section>
+   <div class="admin-nota">
+    <span class="admin-nota-icon">
+     i
+    </span>
+    <div>
+     <strong>
+      Imágenes y almacenamiento
+     </strong>
+     <br/>
+     Las imágenes se suben directamente desde tu equipo. En desarrollo se guardan localmente; en producción se utiliza almacenamiento Cloudinary. MongoDB conserva sus referencias y metadatos, no los archivos binarios. Límite: 10 MB por imagen.
+    </div>
+   </div>
+   <p aria-live="polite" class="form-mensaje" id="admin-mensaje" role="status">
+   </p>
+  </main>
+  <script defer="" src="js/admin-shell.js">
+  </script>
+  <script defer="" src="js/theme.js?v=20261106c">
+  </script>
+  <script defer="" src="js/admin-identidad.js?v=20261106c">
+  </script>
+ </body>
+</html>

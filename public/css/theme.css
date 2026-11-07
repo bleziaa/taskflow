@@ -16,6 +16,10 @@
   --borde-suave: rgba(43,31,65,.12);
   --sombra-suave: 0 5px 20px rgba(37,24,61,.06);
   --sombra-tarjeta-hover: 0 16px 34px rgba(104,65,184,.16);
+  --texto: var(--texto-principal);
+  --texto-secundario: var(--texto-suave);
+  --bg-card: var(--bg-tarjeta);
+  --borde: var(--borde-suave);
 }
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -33,6 +37,10 @@ html[data-theme="dark"] {
   --borde-suave: rgba(226,216,245,.13);
   --sombra-suave: 0 7px 24px rgba(0,0,0,.22);
   --sombra-tarjeta-hover: 0 16px 34px rgba(0,0,0,.3);
+  --texto: var(--texto-principal);
+  --texto-secundario: var(--texto-suave);
+  --bg-card: var(--bg-tarjeta);
+  --borde: var(--borde-suave);
 }
 body, .header, .footer, .tarjeta, .panel, .bloque, .auth-card,
 .dashboard-contenido > section, .dashboard-sidebar, .modal, .practice-card,
@@ -327,3 +335,14 @@ html[data-theme="dark"] .auth-card { box-shadow: 0 18px 40px rgba(0,0,0,.28); }
 .btn-primario:focus-visible, .theme-toggle:focus-visible {
   outline-color: var(--primario-borde);
 }
+
+/* Contraste consistente en modo oscuro para todos los módulos de TaskFlow. */
+html[data-theme="dark"] body { color: var(--texto-principal); background-color: var(--bg-body); }
+html[data-theme="dark"] :is(input,select,textarea,option) { color: var(--texto-principal); background-color: var(--bg-tarjeta); border-color: var(--borde-suave); }
+html[data-theme="dark"] :is(input,textarea)::placeholder { color: var(--texto-tenue); opacity: 1; }
+html[data-theme="dark"] :is(.course-module-editor,.course-module-group,.course-activities-by-module,.course-general-resources,.teacher-home-panel,.teacher-home-kpi,.teacher-course-card,.teacher-detail-sheet,.teacher-student-card,.practice-card,.panel,.bloque,.tarjeta) { color: var(--texto-principal); }
+html[data-theme="dark"] :is(.course-empty,.teacher-home-empty,.course-description,.course-activity p,.course-module-editor-help,.teacher-course-description,.teacher-deadline-info span) { color: var(--texto-suave) !important; }
+html[data-theme="dark"] .course-module-row { background: var(--bg-sutil); border-color: var(--borde-suave); }
+html[data-theme="dark"] .course-module-count { background: rgba(154,120,226,.2); color: #d9c9ff; }
+html[data-theme="dark"] .course-resource,html[data-theme="dark"] .course-evidence-card,html[data-theme="dark"] .course-activity-materials,html[data-theme="dark"] .course-evidence-submit,html[data-theme="dark"] .course-evidence-inbox { border-color: var(--borde-suave); }
+html[data-theme="dark"] .course-resource a,html[data-theme="dark"] .teacher-home-link,html[data-theme="dark"] .teacher-course-actions a { color: #c5aaff; }

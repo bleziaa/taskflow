@@ -7,7 +7,7 @@ const Student = require('../models/Student');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 const { STORAGE_DIR } = require('../middleware/activityResourceUpload');
-const CAMPOS = ['titulo', 'descripcion', 'fechaLimite', 'prioridad', 'estado', 'moduloAcademicoId'];
+const CAMPOS = ['titulo', 'descripcion', 'fechaInicio', 'fechaLimite', 'prioridad', 'estado', 'moduloAcademicoId'];
 function datosPermitidos(body) {
   const data = {};
   for (const campo of CAMPOS) if (Object.prototype.hasOwnProperty.call(body, campo)) data[campo] = body[campo];
@@ -29,7 +29,7 @@ function poblar(query, organizationId = null) {
   const match = organizationId ? { organizationId } : {};
   return query.populate({ path: 'practica', match, select: 'titulo fechaInicio fechaFin estado estructuraAcademica', populate: [
     { path: 'estudiante', match, select: 'nombre codigo email' }, { path: 'tutor', select: 'nombre email' }
-  ] }).populate('creadoPor', 'nombre role').populate('evaluacionTutor.evaluadoPor', 'nombre').populate('valoracionEmpresarial.evaluadoPor', 'nombre');
+  ] }).populate('creadoPor', 'nombre role').populate('historialModificaciones.modificadoPor', 'nombre role').populate('evaluacionTutor.evaluadoPor', 'nombre').populate('valoracionEmpresarial.evaluadoPor', 'nombre');
 }
 const listarActividades = asyncHandler(async (req, res) => {
   let practiceIds;
@@ -42,6 +42,13 @@ const listarActividades = asyncHandler(async (req, res) => {
     practiceIds = practices.map((p) => p._id);
   }
   const filter = { ...(req.organization ? { organizationId: req.organization._id } : {}), ...(practiceIds ? { practica: { $in: practiceIds } } : {}) };
+  if (req.user.role === 'estudiante') {
+    filter.$or = [
+      { fechaInicio: null },
+      { fechaInicio: { $exists: false } },
+      { fechaInicio: { $lte: new Date() } }
+    ];
+  }
   if (req.query.practica) {
     const practice = await obtenerPracticaAccesible(req, req.query.practica);
     filter.practica = practice._id;
@@ -60,7 +67,11 @@ const crearActividad = asyncHandler(async (req, res) => {
   } else if (moduleId) {
     throw new ApiError(400, 'Primero configura los módulos de esta práctica.', { code: 'ACADEMIC_STRUCTURE_REQUIRED' });
   }
-  const actividad = await Activity.create({ ...datosPermitidos(req.body), moduloAcademicoId: moduleId, practica: practica._id, creadoPor: req.user._id, ...(req.organization ? { organizationId: req.organization._id } : {}) });
+  const data = datosPermitidos(req.body);
+  if (data.fechaInicio && new Date(data.fechaInicio) > new Date(data.fechaLimite)) {
+    throw new ApiError(400, 'La fecha de apertura no puede ser posterior a la fecha límite.', { code: 'INVALID_ACTIVITY_DATES' });
+  }
+  const actividad = await Activity.create({ ...data, moduloAcademicoId: moduleId, practica: practica._id, creadoPor: req.user._id, ...(req.organization ? { organizationId: req.organization._id } : {}) });
   const result = await poblar(Activity.findOne({ _id: actividad._id, ...(req.organization ? { organizationId: req.organization._id } : {}) }), req.organization?._id);
   res.status(201).json({ ok: true, data: { actividad: result } });
 });
@@ -72,6 +83,13 @@ const actualizarActividad = asyncHandler(async (req, res) => {
   if (['finalizada', 'suspendida'].includes(practica.estado))
     throw new ApiError(409, 'La práctica está cerrada y no admite cambios.', { code: 'PRACTICE_CLOSED' });
   const data = datosPermitidos(req.body);
+  const fechaInicioFinal = Object.prototype.hasOwnProperty.call(data, 'fechaInicio')
+    ? (data.fechaInicio ? new Date(data.fechaInicio) : null) : actividad.fechaInicio;
+  const fechaLimiteFinal = Object.prototype.hasOwnProperty.call(data, 'fechaLimite')
+    ? new Date(data.fechaLimite) : actividad.fechaLimite;
+  if (fechaInicioFinal && fechaLimiteFinal && fechaInicioFinal > fechaLimiteFinal) {
+    throw new ApiError(400, 'La fecha de apertura no puede ser posterior a la fecha límite.', { code: 'INVALID_ACTIVITY_DATES' });
+  }
   if (Object.prototype.hasOwnProperty.call(data, 'moduloAcademicoId')) {
     const moduleId = data.moduloAcademicoId || null;
     if ((practica.estructuraAcademica || []).length && (!moduleId || !practica.estructuraAcademica.id(moduleId))) {
@@ -79,7 +97,21 @@ const actualizarActividad = asyncHandler(async (req, res) => {
     }
     data.moduloAcademicoId = moduleId;
   }
+  const labels = { titulo: 'Título', descripcion: 'Instrucciones', fechaInicio: 'Fecha de apertura',
+    fechaLimite: 'Fecha límite', prioridad: 'Prioridad', estado: 'Estado', moduloAcademicoId: 'Etapa de evaluación' };
+  const cambios = [];
+  for (const [campo, nuevoValor] of Object.entries(data)) {
+    const anterior = actividad.get(campo);
+    const normalizar = (value) => value instanceof Date ? value.toISOString().slice(0, 10) : String(value ?? '');
+    if (normalizar(anterior) !== normalizar(nuevoValor)) cambios.push({
+      campo: labels[campo] || campo, valorAnterior: normalizar(anterior), valorNuevo: normalizar(nuevoValor)
+    });
+  }
   Object.assign(actividad, data);
+  if (cambios.length) actividad.historialModificaciones.push({
+    motivo: String(req.body.motivoCambio || '').trim().slice(0, 500) || 'Actualización de actividad',
+    cambios, modificadoPor: req.user._id, modificadoEn: new Date()
+  });
   await actividad.save();
   const result = await poblar(Activity.findOne({ _id: actividad._id, ...(req.organization ? { organizationId: req.organization._id } : {}) }), req.organization?._id);
   res.json({ ok: true, data: { actividad: result } });

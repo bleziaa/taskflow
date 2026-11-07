@@ -7,6 +7,13 @@ process.env.NODE_ENV = 'test';
 process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/taskflow-reset-test';
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'test-session-secret';
 process.env.MONGOMS_VERSION = process.env.MONGOMS_VERSION || '8.2.5';
+// Fuerza SMTP deshabilitado aunque el .env local tenga credenciales reales
+// de Gmail configuradas, para no enviar correos reales durante la suite
+// y mantener el resultado determinista (ver tests/organizations.test.js).
+process.env.SMTP_HOST = '';
+process.env.SMTP_USER = '';
+process.env.SMTP_PASS = '';
+process.env.SMTP_FROM = '';
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { crearApp } = require('../src/app');
 const User = require('../src/models/User');

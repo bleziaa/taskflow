@@ -86,6 +86,7 @@ La migración `003_course_workspaces.sql` añade:
 | `academic_course_teachers` | Relación profesor↔curso, con estado independiente |
 | `academic_course_students` | Matrícula de estudiantes por curso |
 | `academic_course_resources` | Documentos y materiales cargados en cada curso |
+| `academic_course_activity_resources` | Materiales PDF asociados a una actividad específica del curso |
 | `academic_course_activities` | Actividades, instrucciones, publicación y fechas del curso |
 | `academic_course_evidences` | Entregas de estudiantes asociadas a actividades del curso |
 | `academic_course_evaluations` | Calificaciones y retroalimentación por curso/estudiante |

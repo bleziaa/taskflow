@@ -45,3 +45,8 @@
 @media(max-width:760px) { .student-dashboard { width:calc(100% - 32px); padding:22px 0 44px; }.student-welcome { min-height:180px; padding:25px; }.welcome-mark { flex-basis:82px; width:82px; height:82px; border-radius:25px; }.welcome-mark span { font-size:1.5rem; }.student-main-grid { grid-template-columns:1fr; }.student-quick-links { grid-template-columns:1fr; }.student-footer { flex-wrap:wrap; padding:20px 16px; } }
 @media(max-width:520px) { .student-kpis { grid-template-columns:1fr 1fr; gap:10px; }.student-kpi { gap:9px; padding:14px 11px; border-radius:14px; }.kpi-icon { flex-basis:36px; width:36px; height:36px; font-size:1.05rem; }.student-kpi strong { font-size:1.08rem; }.kpi-label { font-size:.68rem; }.student-welcome { padding:22px 19px; border-radius:18px; }.welcome-mark { display:none; }.student-card { padding:20px 17px; border-radius:17px; }.practice-details { grid-template-columns:1fr 1fr; gap:14px 10px; }.deadline-item { grid-template-columns:46px minmax(0,1fr); gap:11px; }.deadline-date { width:44px; height:49px; }.deadline-item .activity-chip { grid-column:2; }.student-card-heading { gap:10px; }.student-card-heading h2 { font-size:1.02rem; }.student-footer { font-size:.68rem; } }
 @media(prefers-reduced-motion:reduce) { .progress-track span,.student-quick-links a { transition:none; } }
+
+/* Accesos rápidos: cuatro destinos principales del estudiante */
+.student-quick-links { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media(max-width:900px) { .student-quick-links { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:520px) { .student-quick-links { grid-template-columns:1fr; } }

@@ -28,13 +28,13 @@ async function getCoursesForRequest(req) {
     );
   } else {
     [rows] = await pool.execute(
-      `SELECT c.id, c.course_code, c.name, c.description, c.status, c.created_at,
+      `SELECT c.id, c.course_code, c.name, c.description, c.status, c.created_at, s.id AS student_id,
         (SELECT COUNT(*) FROM academic_course_activities a WHERE a.organization_id=c.organization_id AND a.course_id=c.id) AS activities_count,
         (SELECT COUNT(*) FROM academic_course_resources r WHERE r.organization_id=c.organization_id AND r.course_id=c.id) AS resources_count,
         1 AS students_count
        FROM academic_courses c
        JOIN academic_course_students cs ON cs.organization_id=c.organization_id AND cs.course_id=c.id AND cs.status='activo'
-       JOIN academic_students s ON s.organization_id=cs.organization_id AND s.id=cs.student_id AND s.user_id=?
+       JOIN academic_students s ON s.organization_id=cs.organization_id AND s.id=cs.student_id AND s.user_id=? AND s.status='activo'
        WHERE c.organization_id=? AND c.status='activo' ORDER BY c.name`,
       [userId, orgId]
     );
@@ -42,7 +42,7 @@ async function getCoursesForRequest(req) {
   if (!rows.length) return [];
   const ids = rows.map(row => row.id);
   const marks = ids.map(() => '?').join(',');
-  const studentVisibility = role === 'estudiante' ? " AND status='publicada'" : '';
+  const studentVisibility = role === 'estudiante' ? " AND status='publicada' AND (opens_at IS NULL OR opens_at <= CURRENT_TIMESTAMP(3))" : '';
   const [activities] = await pool.execute(
     `SELECT id, course_id, module_id, title, description, instructions, opens_at, due_at, status
      FROM academic_course_activities WHERE organization_id=? AND course_id IN (${marks})${studentVisibility}
@@ -61,6 +61,58 @@ async function getCoursesForRequest(req) {
      ORDER BY title`,
     [orgId, ...ids]
   );
+  const [activityResources] = await pool.execute(
+    `SELECT id, course_id, activity_id, title, description, original_name, file_size_bytes
+     FROM academic_course_activity_resources WHERE organization_id=? AND course_id IN (${marks})
+     ORDER BY activity_id, created_at`,
+    [orgId, ...ids]
+  );
+  const [activityHistory] = role === 'tutor'
+    ? await pool.execute(
+      `SELECT id, course_id, activity_id, actor_user_id, changed_fields, before_values, after_values, changed_at
+       FROM academic_course_activity_history WHERE organization_id=? AND course_id IN (${marks})
+       ORDER BY changed_at DESC`,
+      [orgId, ...ids]
+    )
+    : [[]];
+  const historyActorIds = [...new Set(activityHistory.map(item => String(item.actor_user_id)))];
+  const historyActors = historyActorIds.length
+    ? await require('../models/User').find({ _id: { $in: historyActorIds } }).select('nombre').lean()
+    : [];
+  const historyActorNames = new Map(historyActors.map(item => [String(item._id), item.nombre]));
+  const parseJson = value => {
+    if (value && typeof value === 'object') return value;
+    try { return JSON.parse(value || '{}'); } catch { return {}; }
+  };
+  const progress = new Map();
+  for (const course of rows) {
+    if (role === 'tutor') {
+      const [stats] = await pool.execute(
+        `SELECT
+          COUNT(DISTINCT CASE WHEN e.status='pendiente' THEN e.id END) AS pending_reviews,
+          COUNT(DISTINCT e.id) AS submissions,
+          COUNT(DISTINCT CASE WHEN e.status='aprobada' THEN e.id END) AS approved
+         FROM academic_course_activities a
+         LEFT JOIN academic_course_evidences e ON e.organization_id=a.organization_id AND e.activity_id=a.id
+         WHERE a.organization_id=? AND a.course_id=?`,
+        [orgId, course.id]
+      );
+      progress.set(course.id, { pendingReviews: Number(stats[0].pending_reviews), submissions: Number(stats[0].submissions), approved: Number(stats[0].approved) });
+    } else {
+      const [stats] = await pool.execute(
+        `SELECT COUNT(*) AS total,
+          SUM(CASE WHEN EXISTS (SELECT 1 FROM academic_course_evidences e WHERE e.organization_id=a.organization_id AND e.activity_id=a.id AND e.student_id=?) THEN 1 ELSE 0 END) AS submitted,
+          SUM(CASE WHEN EXISTS (SELECT 1 FROM academic_course_evidences e WHERE e.organization_id=a.organization_id AND e.activity_id=a.id AND e.student_id=? AND e.status='aprobada') THEN 1 ELSE 0 END) AS approved,
+          SUM(CASE WHEN EXISTS (SELECT 1 FROM academic_course_evaluations v WHERE v.organization_id=a.organization_id AND v.course_id=a.course_id AND v.activity_id=a.id AND v.student_id=?) THEN 1 ELSE 0 END) AS graded
+         FROM academic_course_activities a
+         WHERE a.organization_id=? AND a.course_id=? AND a.status='publicada'`,
+        [course.student_id, course.student_id, course.student_id, orgId, course.id]
+      );
+      const total = Number(stats[0].total || 0);
+      const approved = Number(stats[0].approved || 0);
+      progress.set(course.id, { total, submitted: Number(stats[0].submitted || 0), approved, graded: Number(stats[0].graded || 0), percent: total ? Math.round(approved / total * 100) : 0 });
+    }
+  }
   return rows.map(course => ({
     id: course.id,
     code: course.course_code,
@@ -68,13 +120,30 @@ async function getCoursesForRequest(req) {
     description: course.description,
     status: course.status,
     counts: { activities: Number(course.activities_count), resources: Number(course.resources_count), students: Number(course.students_count) },
+    progress: progress.get(course.id) || {},
     modules: modules.filter(item => item.course_id === course.id).map(item => ({
       id: item.id, number: Number(item.module_number), title: item.title,
       description: item.description, status: item.status
     })),
     activities: activities.filter(item => item.course_id === course.id).map(item => ({
       id: item.id, moduleId: item.module_id, title: item.title, description: item.description, instructions: item.instructions,
-      opensAt: item.opens_at, dueAt: item.due_at, status: item.status
+      opensAt: item.opens_at, dueAt: item.due_at, status: item.status,
+      history: activityHistory.filter(entry => entry.activity_id === item.id).map(entry => {
+        const changed = parseJson(entry.changed_fields);
+        return {
+          fields: Array.isArray(changed.fields) ? changed.fields : [],
+          reason: changed.reason || '',
+          before: parseJson(entry.before_values),
+          after: parseJson(entry.after_values),
+          actorName: historyActorNames.get(String(entry.actor_user_id)) || 'Docente',
+          changedAt: entry.changed_at
+        };
+      }),
+      resources: activityResources.filter(resource => resource.activity_id === item.id).map(resource => ({
+        id: resource.id, title: resource.title, description: resource.description, fileName: resource.original_name,
+        sizeBytes: Number(resource.file_size_bytes),
+        downloadUrl: `/api/organization/courses/${course.id}/activities/${item.id}/resources/${resource.id}/download`
+      }))
     })),
     resources: resources.filter(item => item.course_id === course.id).map(item => ({
       id: item.id, title: item.title, description: item.description, fileName: item.original_name,

@@ -7,6 +7,7 @@ const validarNueva = [
   body('titulo').isString().trim().isLength({ min: 3, max: 120 }).withMessage('El título debe tener entre 3 y 120 caracteres.'),
   body('descripcion').optional().isString().isLength({ max: 3000 }),
   body('moduloAcademicoId').optional({ nullable: true }).isMongoId(),
+  body('fechaInicio').optional({ nullable: true, checkFalsy: true }).isISO8601().withMessage('Indica una fecha de apertura válida.'),
   body('fechaLimite').isISO8601().withMessage('Indica una fecha límite válida.'),
   body('prioridad').optional().isIn(prioridades),
   body('estado').optional().isIn(estados),
@@ -15,7 +16,9 @@ const validarActualizacion = [
   body('titulo').optional().isString().trim().isLength({ min: 3, max: 120 }),
   body('descripcion').optional().isString().isLength({ max: 3000 }),
   body('moduloAcademicoId').optional({ nullable: true }).isMongoId(),
+  body('fechaInicio').optional({ nullable: true, checkFalsy: true }).isISO8601(),
   body('fechaLimite').optional().isISO8601(),
+  body('motivoCambio').optional().isString().isLength({ max: 500 }),
   body('prioridad').optional().isIn(prioridades),
   body('estado').optional().isIn(estados),
 ];

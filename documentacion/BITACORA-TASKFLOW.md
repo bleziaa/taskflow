@@ -431,7 +431,7 @@ Los registros académicos actuales todavía no tienen una organización propieta
 
 
 ## 4 de noviembre de 2026 — Configuración Gmail SMTP
-- Se configuró el remitente TaskFlow con `luis132kj@gmail.com` y servidor `smtp.gmail.com:587` (STARTTLS).
+- Se configuró el remitente institucional de TaskFlow y el servidor SMTP `smtp.gmail.com:587` (STARTTLS); la dirección concreta permanece en la configuración privada del entorno.
 - Se preservó cualquier valor previo de `SMTP_PASS`; no se leyó ni se mostró ningún secreto.
 - Se añadió `npm run smtp:verify` para comprobar conexión/autenticación sin enviar correos.
 - Pendiente: introducir una contraseña de aplicación de Google en `.env` y ejecutar la verificación.
@@ -999,3 +999,179 @@ Los cursos/asignaturas no se modelan como prácticas empresariales. Se conserva 
 - Se conservaron copias de respaldo de los archivos modificados (`*.bak-teacher-finish-*` y `*.bak-final-polish-*`).
 - Validación: `node --check` en los cuatro scripts docentes/actividades; lectura sintáctica de cuatro páginas HTML; HTTP 200 para teacher-home, teacher-students y teacher-academic; `npm test`: 68 aprobadas, 0 fallidas.
 - Alcance pendiente deliberado: todavía no se ha implementado el flujo nuevo de materiales por actividad y entregas/versiones por estudiante; se abordará después de cerrar el panel docente, sin confundirlo con las evidencias de prácticas existentes.
+
+## 2026-11-06 — Materiales PDF asociados a actividades de cursos
+
+- [x] Se añadió la migración `005_course_activity_resources.sql` y se aplicó correctamente en MariaDB.
+- [x] Se creó almacenamiento privado para PDFs de actividades con nombre aleatorio, límite de 10 MB y comprobación de firma PDF.
+- [x] Se añadieron rutas protegidas para que el docente asignado adjunte material y los estudiantes matriculados descarguen el PDF cuando la actividad esté publicada.
+- [x] El espacio de cada curso ahora incluye los materiales vinculados a cada actividad, sin mezclarlos con los materiales generales del curso.
+- [x] En **Mis cursos**, el docente dispone de un formulario para adjuntar PDF, título y descripción dentro de cada actividad; el estudiante ve los materiales disponibles para descargar.
+- [x] Se conservaron respaldos de los archivos de frontend, controlador y rutas antes de modificarlos.
+- [x] Validación de sintaxis Node para el controlador nuevo, controlador de espacio académico, rutas y JavaScript de cursos.
+- [x] Migración MariaDB aplicada: tabla `academic_course_activity_resources` creada.
+- [x] `npm run db:mysql:verify-courses`: OK.
+- [x] Suite completa `npm test`: 68 aprobadas, 0 fallidas.
+- [ ] Falta prueba manual en navegador con cuentas reales de docente y estudiante, incluyendo subida y descarga de un PDF.
+- [ ] Siguiente bloque: entrega de evidencias por actividad de curso, revisión/devolución del docente, calificación y cálculo de progreso.
+
+## 2026-11-06 — Entregas, revisión y calificación de actividades de cursos
+
+- [x] Se añadió carga de evidencias PDF, DOCX y ZIP (máximo 10 MB) para estudiantes matriculados.
+- [x] Se validan apertura/publicación de la actividad, matrícula, tipo y firma del archivo; se marca la entrega tardía en la respuesta del servicio.
+- [x] Se conserva el historial de entregas: solo se permite una nueva versión cuando la última entrega requiere correcciones.
+- [x] El docente asignado puede consultar entregas, descargar archivos, aprobar o solicitar correcciones con observación obligatoria.
+- [x] El docente puede registrar y actualizar calificaciones sobre escala 0–5 con retroalimentación.
+- [x] El estudiante puede consultar estado de entrega, observaciones y calificación desde la actividad.
+- [x] El espacio de cursos calcula progreso de estudiante a partir de actividades publicadas con evidencia aprobada y muestra al docente entregas pendientes de revisión.
+- [x] Se añadió almacenamiento privado con nombres aleatorios y validación de firma de archivo.
+- [x] Validación de sintaxis Node en controlador, middleware, rutas y frontend.
+- [x] `npm test`: 68 aprobadas, 0 fallidas.
+- [x] `npm run db:mysql:verify-courses` y `npm run db:mysql:verify`: OK; los datos de prueba se revirtieron.
+- [ ] Falta prueba manual en navegador con cuentas reales, especialmente el ciclo completo de devolución y reentrega.
+- [ ] La suite actual no contiene todavía una prueba automatizada de extremo a extremo para estas nuevas rutas SQL.
+
+
+## 2026-11-06 — Ajuste del cálculo y visualización del progreso por curso
+
+- [x] Se corrigió la consulta de progreso del estudiante para usar `academic_students.id` y no el identificador global de usuario.
+- [x] El contador de entregas ahora incluye también las evidencias devueltas para corrección, sin confundirlas con las aprobadas.
+- [x] El acceso al listado de cursos del estudiante exige que su ficha académica esté activa, en coherencia con las rutas de entrega.
+- [x] Se amplió el resumen visual de cursos: entregadas/total, aprobadas, calificadas y porcentaje de avance; en docentes, pendientes, recibidas y aprobadas.
+- [ ] Pendiente validar estas métricas con cuentas reales y datos académicos de prueba desde el navegador.
+
+## 2026-11-06 — Rediseño transversal de navegación y preparación de demostración académica
+
+### Interfaz
+- [x] Se rehízo la hoja transversal `public/css/ui-compact.css` como capa visual común, cargada después de los estilos específicos para conservar la identidad de cada módulo y unificar su presentación.
+- [x] Se compactó la barra superior: alturas, rellenos, tipografía, estados activos, separación entre enlaces, selector institucional, identificación de usuario y botón de cierre de sesión.
+- [x] Se definió navegación móvil desplegable mediante el botón accesible existente; en móvil los destinos se organizan en una cuadrícula compacta de dos columnas y las acciones de sesión quedan agrupadas.
+- [x] Se normalizaron grupos de acciones, pestañas, filtros, formularios, tarjetas, indicadores, tablas, encabezados y paneles para los módulos de estudiante, docente, administración general e institucional.
+- [x] Se ajustaron contenedores y espacios para evitar que los elementos queden excesivamente separados, manteniendo adaptación responsive y foco visible.
+- [x] Se actualizó el parámetro de caché de la hoja compartida a `20261106h` en las 18 páginas HTML públicas.
+- [ ] La presentación aún requiere revisión visual en navegador en escritorio y móvil, y comprobación de cada rol con sesión real. Los chequeos de código no sustituyen esa prueba.
+
+### Datos de demostración — Base de Datos II
+- [x] Se ejecutó el sembrador idempotente `npm run seed:course-evidence-demo`: creó/actualizó tres fichas estudiantiles ficticias y tres evidencias PDF identificadas con prefijo DEMO.
+- [x] Los estados de muestra quedan distribuidos en: una entrega pendiente de revisión, una aprobada con calificación de ejemplo y una devuelta para correcciones.
+- [x] Se creó `scripts/seed-demo-student-accounts.js` y el comando `npm run seed:demo-student-accounts`, con tres cuentas de acceso de estudiante marcadas DEMO y correos del dominio reservado `.invalid`.
+- [x] Se asociaron las cuentas de demostración a la organización Universidad de Cartagena y a sus fichas académicas de Base de Datos II; no se crearon identidades de personas reales.
+- [x] La contraseña de demostración se define mediante `DEMO_STUDENT_PASSWORD`; si no se configura, el script usa una clave local de demostración. No reutilizarla ni desplegar estas cuentas en un entorno público.
+- [ ] Antes de presentar en un entorno compartido o público, cambiar las claves, retirar las cuentas y evidencias DEMO, o mantener el entorno aislado para demostración.
+
+### Trazabilidad
+- [x] Se documentó esta fase en la bitácora técnica del proyecto.
+- [ ] Pendiente anexar capturas de revisión visual y una matriz final de aceptación por rol después de la prueba manual.
+
+### Ajuste de espaciado — Mis cursos (06-11-2026)
+- [x] Se redujo el espacio vertical entre el encabezado de Mis cursos, los indicadores de resumen y la cuadrícula de asignaturas.
+- [x] Se forzó la cuadrícula de cursos a ocupar el ancho disponible, con tarjetas fluidas y separación compacta.
+- [x] Se redujo el relleno superior y el alto del banner de esta vista; se actualizó la versión de caché de `courses.css` a `20261106g`.
+- [ ] Pendiente validar visualmente en el navegador después de recarga forzada; el cambio CSS está aplicado pero aún no se ha comprobado con captura posterior.
+
+### Identidad institucional aplicada al espacio activo (06-11-2026)
+- [x] Se agregó `GET /api/organization/branding`, protegido por autenticación y validación de membresía/organización activa.
+- [x] La carga de tema consulta la identidad de la organización activa y aplica las variables CSS de color sin alterar el tema claro/oscuro elegido por el usuario.
+- [x] Se agregaron paletas iniciales diferenciadas para Universidad Nacional de Colombia (verde institucional) y Universidad de Cartagena (verde del escudo, amarillo complementario); las personalizaciones guardadas por el administrador tienen prioridad salvo que sean los valores morados predeterminados de TaskFlow.
+- [x] Se conectaron los colores a botones principales, encabezado de cursos, enlaces y pestañas de unidad; la hoja compartida subió a `20261106i` en las 18 páginas públicas.
+- [ ] Pendiente comprobar visualmente el cambio al alternar entre las dos organizaciones con una cuenta que tenga ambas membresías.
+
+### Acceso por correo y recuperación de contraseña — diagnóstico
+- [x] Se comprobó que la creación de usuarios ya genera contraseña temporal y llama al servicio SMTP para enviarla.
+- [x] Se verificó que el archivo `.env` local tiene `SMTP_HOST` configurado pero no tiene `SMTP_PASS`; por eso el correo no puede enviarse y el sistema entrega la clave temporal al administrador como alternativa.
+- [ ] La recuperación automática «Olvidé mi contraseña» no está implementada todavía en las rutas públicas; requiere token aleatorio de un solo uso, vencimiento, formulario de nueva contraseña y correo SMTP.
+- [ ] Configurar credenciales SMTP mediante contraseña de aplicación en `.env` (sin compartir secretos por chat) y probar entrega real antes de habilitar el flujo para todos los roles.
+
+### Recuperación de contraseña y activación por correo (06-11-2026)
+- [x] Se creó el modelo PasswordResetToken con hash SHA-256 del token, vencimiento automático TTL y marca de uso.
+- [x] Se implementaron los endpoints públicos protegidos por CSRF: POST /api/auth/forgot-password y POST /api/auth/reset-password.
+- [x] Se añadió limitación de solicitudes (5 por hora), respuesta uniforme para evitar enumeración de cuentas, tokens aleatorios de un solo uso y vencimiento de 30 minutos.
+- [x] La nueva contraseña exige 12–128 caracteres, se guarda con bcrypt y elimina el bloqueo de contraseña temporal.
+- [x] Se añadió el formulario «¿Olvidaste tu contraseña?» al inicio de sesión y la página restablecer-password.html.
+- [x] El alta y el restablecimiento administrativo de cuentas institucionales envían ahora un enlace para que el usuario cree su propia contraseña, evitando enviar la clave temporal por correo en texto plano. Si SMTP no está disponible, el administrador conserva la clave temporal como alternativa local.
+- [x] Se añadió TASKFLOW_PUBLIC_URL a la configuración de entorno para construir enlaces correctos en producción.
+- [x] Se añadieron pruebas de integración para solicitud genérica, cambio de contraseña, token de un solo uso, vencimiento, longitud mínima y página pública.
+- [x] Validación automatizada: 72 pruebas aprobadas, 0 fallidas; node --check y git diff --check sin errores.
+- [ ] Pendiente operativo: configurar SMTP_PASS en el .env local y TASKFLOW_PUBLIC_URL con el dominio HTTPS real. El .env local no tiene la contraseña SMTP, por lo que no se ha podido verificar la entrega real de correos.
+
+### Corrección del enlace «¿Olvidaste tu contraseña?» (06-11-2026)
+- [x] Se reprodujo el síntoma indicado: al hacer clic no aparecía el formulario.
+- [x] Causa identificada: la política CSP del servidor establece `script-src 'self'`, por lo que bloquea el JavaScript inline que registraba el evento del enlace.
+- [x] Se trasladó el evento de apertura/cierre del formulario a `public/js/password-reset.js`, archivo externo permitido por CSP.
+- [x] Se conserva el estado accesible `aria-expanded`, se muestra/oculta también la nota informativa y se enfoca el campo de correo al abrir.
+- [x] Se añadió versión de caché `20261106b` al script en login.html y se verificó que el servidor entrega el código actualizado.
+- [x] `node --check public/js/password-reset.js` finalizó sin errores.
+- [ ] Pendiente prueba manual en navegador/celular: recargar sin caché y confirmar que el formulario aparece al tocar el enlace.
+- [ ] El envío del correo sigue dependiendo de configurar SMTP_PASS; este arreglo soluciona la apertura del formulario, no la entrega de correo.
+
+
+## 2026-11-06 — Corrección de identidad institucional y logotipo
+
+- [x] Se habilitó el color principal también para identidades institucionales; antes el formulario lo ocultaba y el backend descartaba ese campo, dejando el morado global mezclado con la paleta institucional.
+- [x] El editor aplica en tiempo real la paleta seleccionada a la interfaz de administración y conserva la vista previa de los tres colores.
+- [x] Se corrigió la validación de URL de logotipo/fondo para aceptar rutas locales seguras `/media/branding/<uuid>.(jpg|png|webp)` generadas por la carga del propio sistema, además de URLs HTTP/HTTPS. Esto evita que el guardado posterior del formulario rechace una imagen recién subida.
+- [x] Se añadió un logotipo institucional de respaldo de Universidad de Cartagena (`/media/branding/unicartagena.png`) cuando la organización activa aún no tiene logo personalizado.
+- [x] El tema institucional aplica el color principal/secundario/acento y muestra el logotipo junto al nombre institucional en la cabecera cuando existe.
+- [x] Se añadió cache-buster a los scripts de la página de identidad visual.
+- [x] Pruebas de branding: 6 aprobadas, 0 fallidas; incluyen subida del logo institucional, disponibilidad del archivo, guardado de la ruta local y color principal institucional.
+- [x] `node --check` aprobado en los controladores y scripts JavaScript modificados.
+- [ ] Pendiente prueba visual manual en navegador con la cuenta de administrador y cambio de organización activa para verificar presentación en todas las pantallas.
+
+- [x] Suite completa ejecutada con las variables SMTP vacías solo para aislar los tests que esperan correo no configurado: `npm test` 73/73 aprobadas, 0 fallidas. La configuración SMTP real del `.env` no se modificó.
+- [x] Servidor local reiniciado; `/api/health`, `/admin-identidad.html`, el JavaScript actualizado y `/media/branding/unicartagena.png` responden HTTP 200.
+
+
+## 2026-11-06 — Fechas de publicación y trazabilidad de actividades
+
+### Implementado
+- [x] El docente puede definir una fecha de apertura independiente de la fecha límite de entrega.
+- [x] Las actividades sin fecha de apertura conservan compatibilidad y se consideran disponibles inmediatamente.
+- [x] Las actividades con fecha futura no aparecen todavía en el listado del estudiante; la consulta docente conserva la visibilidad para planificación.
+- [x] El formulario de edición carga ambas fechas y permite modificarlas sin cambiar la práctica ni la etapa a la que pertenece la actividad.
+- [x] El servidor rechaza fechas de apertura posteriores a la fecha límite, tanto al crear como al editar; el navegador también informa el error antes de enviar.
+- [x] Cada edición que cambia datos registra responsable, fecha, motivo y valores anteriores/nuevos; el docente puede consultar el historial desde la tarjeta de actividad.
+- [x] Las actividades antiguas sin fecha de apertura ni historial siguen siendo válidas.
+- [x] Se conservaron copias de respaldo de los seis archivos intervenidos con el sufijo `bak-activity-dates-20261106-152901`.
+
+### Validación
+- [x] `node --check` aprobado para JavaScript del navegador, controlador, modelo y validador.
+- [x] `git diff --check` sin errores de whitespace.
+- [x] Pruebas de esquema nuevas: 2/2 aprobadas (fecha de apertura, historial y compatibilidad con registros antiguos).
+- [x] Suite completa repetida con las variables SMTP vacías solo para aislar pruebas de entorno: 75 aprobadas, 0 fallidas; la configuración real del archivo `.env` no se modificó.
+- [x] MariaDB y MongoDB conectadas; la página de actividades y sus recursos CSS/JS respondieron HTTP 200 después del reinicio.
+- [ ] Prueba visual con cuentas reales de docente y estudiante pendiente.
+
+
+## 2026-11-06 — Edición completa de actividades dentro de Mis cursos
+
+### Implementado
+- [x] Se reemplazaron los cuadros `prompt()` del botón Editar por un formulario integrado en la tarjeta de actividad.
+- [x] El docente puede modificar título, descripción, instrucciones, unidad, visibilidad, fecha/hora de apertura y fecha/hora de entrega desde el mismo formulario.
+- [x] Se valida que la fecha de entrega no sea anterior a la fecha de apertura en el servidor y en el formulario.
+- [x] Las actividades publicadas con apertura futura no se muestran todavía al estudiante; el docente conserva la vista de planificación.
+- [x] Se conectó el historial SQL que ya tenía migración preparada: cada edición registra responsable, fecha, campos cambiados, valores anteriores/nuevos y motivo.
+- [x] El espacio docente muestra las fechas con hora y permite desplegar el historial de cambios por actividad.
+- [x] Se añadió verificación de persistencia/lectura de la tabla de historial en `scripts/verify-course-workspaces.js`; el comando `npm run db:mysql:verify-courses` pasó.
+- [x] Se actualizó el cache-buster de `courses.js` y `courses.css`; se reinició el servidor local con MongoDB y MariaDB conectadas.
+
+### Validación
+- [x] `node --check` aprobado en frontend, controladores, rutas y script de verificación.
+- [x] `git diff --check` sin errores.
+- [x] Suite completa: 75/75 aprobadas con SMTP temporalmente vacío solo durante la ejecución de tests; no se alteró el archivo `.env`.
+- [x] Comprobación HTTP de salud, página de cursos, JavaScript y CSS pendiente de repetir después del último reinicio.
+- [ ] Validación visual con una sesión real de docente y estudiante pendiente.
+
+
+## 2026-11-06 — Verificación de estado para cierre del TCC INGSOFT 4_9
+
+### Verificación automatizada
+- [x] Suite completa `npm test` (SMTP vacío solo para la ejecución): 75 pruebas aprobadas, 0 fallidas.
+- [x] Servidor local iniciado (`node src/server.js`); `/api/health` responde 200.
+- [x] Verificación HTTP de 14 páginas públicas (login, dashboard, institution-admin, teacher-home, teacher-academic, teacher-students, courses, activities, practices, evaluations, reports, admin, admin-identidad, restablecer-password): todas 200, salvo `dashboard.html` que da 302 (redirección esperada por falta de sesión).
+- [x] `node scripts/verificar-smtp.js`: conexión y autenticación SMTP correctas con las credenciales actuales del `.env`. **Se resuelve el pendiente operativo anterior**: `SMTP_PASS` ya está configurado (no se imprimió ni modificó ningún secreto). No se envió ningún correo real.
+
+### Pendiente identificado
+- [ ] `TASKFLOW_PUBLIC_URL` no está definida en `.env`; los enlaces de los correos (restablecimiento de contraseña, invitación) usarán el valor por defecto en lugar del dominio real si se despliega públicamente. No es bloqueante para demo local.
+- [ ] Hay cambios extensos sin confirmar en git (`git status` mostró ~45 archivos modificados y `CURSOS-DOCENTES.md` sin seguimiento); no se hizo commit, conforme a las restricciones del encargo.
+- [ ] Sigue sin realizarse la validación visual manual en navegador con cuentas reales de cada rol — las comprobaciones de hoy fueron a nivel de servidor/HTTP, no sustituyen esa prueba.
+- [ ] No se verificó hoy si la documentación académica en `escrito/` (TCC, informe de auditoría) refleja el estado actual del código; `escrito/INGSOFT_4_9_TCC_CON_EVIDENCIAS.docx` tiene un archivo de bloqueo de LibreOffice (`.~lock...#`), lo que sugiere que pudo quedar abierto en una sesión anterior.

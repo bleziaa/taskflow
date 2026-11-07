@@ -34,3 +34,13 @@ backup-*/
 
 escrito/
 reports/
+
+# Entorno local de carga demo; contiene la URI de MongoDB local
+.env.offline
+
+# Copias de seguridad organizadas
+backups/
+
+# Credenciales y respaldos locales de bases de datos
+atlas-credentials.env
+.env.backup-*

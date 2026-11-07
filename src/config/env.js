@@ -31,6 +31,7 @@ function validarEntorno() {
 const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: Number(process.env.PORT) || 3000,
+  publicUrl: process.env.TASKFLOW_PUBLIC_URL || 'http://127.0.0.1:3000',
   mongoUri: process.env.MONGODB_URI,
   mysql: {
     enabled: process.env.MYSQL_ENABLED === 'true',

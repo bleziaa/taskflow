@@ -1,9 +1,4 @@
-/**
- * Conexion a MongoDB mediante Mongoose.
- *
- * No se conecta al importar el modulo: la conexion se inicia de forma
- * explicita desde server.js (o desde las pruebas) llamando a conectarDB().
- */
+
 const mongoose = require('mongoose');
 const { env } = require('./env');
 
@@ -16,7 +11,7 @@ const ESTADOS = {
 
 /**
  * Abre la conexion principal con MongoDB.
- * @param {string} [uri] Cadena de conexion (por defecto MONGODB_URI).
+ * @param {string} [uri]
  * @returns {Promise<import('mongoose').Connection>}
  */
 async function conectarDB(uri = env.mongoUri) {

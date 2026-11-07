@@ -54,6 +54,20 @@ async function main() {
       'INSERT INTO academic_course_evidences (id, organization_id, activity_id, student_id, original_name, stored_name, mime_type, file_size_bytes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [evidenceA, orgA, activityA, studentA, 'entrega.pdf', evidenceA + '.pdf', 'application/pdf', 256]
     );
+    const historyId = id();
+    await db.execute(
+      'INSERT INTO academic_course_activity_history (id, organization_id, course_id, activity_id, actor_user_id, changed_fields, before_values, after_values) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [historyId, orgA, courseA, activityA, teacherA,
+        JSON.stringify({ fields: ['dueAt'], reason: 'Prueba de auditoría' }),
+        JSON.stringify({ dueAt: null }), JSON.stringify({ dueAt: '2026-11-20T23:00:00.000Z' })]
+    );
+    const [historyRows] = await db.execute(
+      'SELECT changed_fields, before_values, after_values FROM academic_course_activity_history WHERE organization_id=? AND course_id=? AND activity_id=?',
+      [orgA, courseA, activityA]
+    );
+    assert.equal(historyRows.length, 1);
+    assert.deepEqual(typeof historyRows[0].changed_fields === 'string' ? JSON.parse(historyRows[0].changed_fields) : historyRows[0].changed_fields,
+      { fields: ['dueAt'], reason: 'Prueba de auditoría' });
     await db.execute(
       'INSERT INTO academic_course_evaluations (id, organization_id, course_id, student_id, activity_id, teacher_user_id, title, score, max_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [evaluationA, orgA, courseA, studentA, activityA, teacherA, 'Evaluación inicial', 4.5, 5]
@@ -83,7 +97,7 @@ async function main() {
       error => error.code === 'ER_NO_REFERENCED_ROW_2'
     );
 
-    console.log('[course-workspaces] OK: un profesor puede asignarse por curso; documentos, actividades, evidencias y evaluaciones quedan ligados al curso; los cruces de organización son rechazados.');
+    console.log('[course-workspaces] OK: un profesor puede asignarse por curso; documentos, actividades, evidencias y evaluaciones quedan ligados al curso; los cruces de organización son rechazados y el historial de actividad se conserva.');
   } finally {
     await db.rollback();
     db.release();

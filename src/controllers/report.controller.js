@@ -45,16 +45,38 @@ const obtenerInformes = asyncHandler(async (req, res) => {
       evaluacion: evaluation,
     };
   });
+  // Un docente también debe ver a los estudiantes que tiene asignados en su ficha,
+  // aunque todavía no se les haya creado una práctica empresarial.
+  const estudiantesAsignados = req.user.role === 'tutor'
+    ? await Student.find({ tutor: req.user._id, estado: 'activo', ...(req.organization ? { organizationId: req.organization._id } : {}) })
+        .populate({ path: 'empresa', match: matchOrg, select: 'razonSocial ciudad' })
+        .select('codigo nombre email programa semestre empresa tutor')
+        .sort({ nombre: 1 }).limit(300).lean()
+    : [];
+  const estudiantesConPractica = new Set(reportes.map(item => String(item.estudiante?._id || '')).filter(Boolean));
+  const seguimiento = [...reportes];
+  for (const estudiante of estudiantesAsignados) {
+    if (estudiantesConPractica.has(String(estudiante._id))) continue;
+    seguimiento.push({
+      practica: null,
+      estudiante,
+      empresa: estudiante.empresa || null,
+      tutor: { _id: req.user._id, nombre: req.user.nombre, email: req.user.email },
+      resumen: { totalActividades: 0, completadas: 0, enRevision: 0, pendientes: 0, progreso: 0, totalEvidencias: 0, evidenciasAprobadas: 0, evidenciasConCambios: 0 },
+      actividades: [], evaluacion: null,
+      seguimientoSinPractica: true,
+    });
+  }
   const resumen = {
     practicas: reportes.length,
-    activas: reportes.filter(r => r.practica.estado === 'en_curso').length,
-    finalizadas: reportes.filter(r => r.practica.estado === 'finalizada').length,
+    activas: reportes.filter(r => r.practica?.estado === 'en_curso').length,
+    finalizadas: reportes.filter(r => r.practica?.estado === 'finalizada').length,
     totalActividades: reportes.reduce((n, r) => n + r.resumen.totalActividades, 0),
     actividadesCompletadas: reportes.reduce((n, r) => n + r.resumen.completadas, 0),
     totalEvidencias: reportes.reduce((n, r) => n + r.resumen.totalEvidencias, 0),
     evaluaciones: reportes.filter(r => r.evaluacion).length,
     promedio: reportes.filter(r => r.evaluacion).length ? Number((reportes.filter(r => r.evaluacion).reduce((n, r) => n + r.evaluacion.calificacion, 0) / reportes.filter(r => r.evaluacion).length).toFixed(2)) : null,
   };
-  res.json({ ok: true, data: { resumen, reportes } });
+  res.json({ ok: true, data: { resumen, reportes: seguimiento } });
 });
 module.exports = { obtenerInformes };

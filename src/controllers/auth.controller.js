@@ -1,6 +1,9 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('node:crypto');
 
 const User = require('../models/User');
+const PasswordResetToken = require('../models/PasswordResetToken');
+const { enviarEnlaceRestablecimiento } = require('../services/email.service');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 const { env } = require('../config/env');
@@ -127,6 +130,66 @@ const cambiarPassword = asyncHandler(async (req, res) => {
   res.json({ ok: true, data: { mensaje: 'Contraseña actualizada correctamente.', usuario: usuario.toJSON() } });
 });
 
+const solicitarRestablecimientoPassword = asyncHandler(async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new ApiError(400, 'Escribe un correo electrónico válido.', { code: 'INVALID_EMAIL' });
+  }
+
+  const usuario = await User.findOne({ email, activo: { $ne: false } }).select('_id nombre email');
+  if (usuario) {
+    await PasswordResetToken.deleteMany({ user: usuario._id, usedAt: null });
+    const token = crypto.randomBytes(32).toString('base64url');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    await PasswordResetToken.create({ user: usuario._id, tokenHash, expiresAt });
+    const baseUrl = String(env.publicUrl || 'http://127.0.0.1:3000').replace(/\/$/, '');
+    const resultado = await enviarEnlaceRestablecimiento({
+      nombre: usuario.nombre,
+      email: usuario.email,
+      url: `${baseUrl}/restablecer-password.html?token=${encodeURIComponent(token)}`,
+    });
+    if (resultado.status !== 'sent') {
+      await PasswordResetToken.deleteOne({ tokenHash });
+    }
+  }
+
+  // Misma respuesta exista o no la cuenta: evita enumeración de correos.
+  res.json({
+    ok: true,
+    data: { mensaje: 'Si existe una cuenta activa con ese correo, recibirás instrucciones para restablecer tu contraseña.' },
+  });
+});
+
+const confirmarRestablecimientoPassword = asyncHandler(async (req, res) => {
+  const token = String(req.body.token || '');
+  const nuevaPassword = String(req.body.newPassword || '');
+  if (!/^[A-Za-z0-9_-]{40,60}$/.test(token)) {
+    throw new ApiError(400, 'El enlace no es válido o ha vencido. Solicita uno nuevo.', { code: 'RESET_TOKEN_INVALID' });
+  }
+  if (nuevaPassword.length < 12 || nuevaPassword.length > 128) {
+    throw new ApiError(400, 'La contraseña debe tener entre 12 y 128 caracteres.', { code: 'INVALID_PASSWORD' });
+  }
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const registro = await PasswordResetToken.findOneAndUpdate(
+    { tokenHash, usedAt: null, expiresAt: { $gt: new Date() } },
+    { $set: { usedAt: new Date() } },
+    { returnDocument: 'after' }
+  );
+  if (!registro) {
+    throw new ApiError(400, 'El enlace no es válido o ha vencido. Solicita uno nuevo.', { code: 'RESET_TOKEN_INVALID' });
+  }
+  const usuario = await User.findOne({ _id: registro.user, activo: { $ne: false } });
+  if (!usuario) {
+    throw new ApiError(400, 'El enlace no es válido o ha vencido. Solicita uno nuevo.', { code: 'RESET_TOKEN_INVALID' });
+  }
+  usuario.passwordHash = await bcrypt.hash(nuevaPassword, BCRYPT_ROUNDS);
+  usuario.debeCambiarPassword = false;
+  await usuario.save();
+  await PasswordResetToken.deleteMany({ user: usuario._id });
+  res.json({ ok: true, data: { mensaje: 'Tu contraseña se actualizó. Ya puedes iniciar sesión.' } });
+});
+
 const cerrarSesion = asyncHandler(async (req, res) => {
   await destruirSesion(req);
   limpiarCookieSesion(res);
@@ -145,5 +208,7 @@ module.exports = {
   iniciarSesion,
   obtenerSesion,
   cambiarPassword,
+  solicitarRestablecimientoPassword,
+  confirmarRestablecimientoPassword,
   cerrarSesion,
 };

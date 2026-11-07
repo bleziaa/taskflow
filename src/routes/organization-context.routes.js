@@ -15,6 +15,10 @@ const evaluaciones = require('../controllers/evaluation.controller');
 const informes = require('../controllers/report.controller');
 const estructuraAcademica = require('../controllers/academic-structure.controller');
 const espaciosCurso = require('../controllers/course-workspace.controller');
+const recursosActividadCurso = require('../controllers/course-activity-resource.controller');
+const { subirRecursoCursoActividad } = require('../middleware/courseActivityResourceUpload');
+const entregasCurso = require('../controllers/course-activity-evidence.controller');
+const { subirEvidenciaCurso } = require('../middleware/courseActivityEvidenceUpload');
 const gestionCursos = require('../controllers/course-management.controller');
 const practiceValidators = require('../validators/practice.validators');
 const activityValidators = require('../validators/activity.validators');
@@ -24,6 +28,7 @@ const { subirRecursoActividad } = require('../middleware/activityResourceUpload'
 const { param, body } = require('express-validator');
 const router = Router();
 router.get('/', controller.listarOrganizacionesDelUsuario);
+router.get('/branding', requireOrganization('administrador', 'tutor', 'estudiante'), controller.obtenerIdentidadOrganizacionActiva);
 router.put('/active', protegerCsrf, body('organizationId').isMongoId().withMessage('Identificador de organización inválido.'), validate, controller.seleccionarOrganizacionActiva);
 router.delete('/active', protegerCsrf, controller.limpiarOrganizacionActiva);
 
@@ -52,7 +57,7 @@ router.post('/courses', requireOrganization('administrador'), protegerCsrf,
   body('code').isString().trim().isLength({ min: 2, max: 40 }),
   body('name').isString().trim().isLength({ min: 2, max: 140 }),
   body('description').optional().isString().isLength({ max: 4000 }),
-  body('moduleCount').isInt({ min: 1, max: 50 }).toInt(),
+  body('moduleCount').isInt({ min: 4, max: 4 }).toInt(),
   body('teacherUserIds').optional().isArray({ max: 30 }),
   validate, gestionCursos.crearCurso);
 router.patch('/courses/:courseId', requireOrganization('administrador'), protegerCsrf,
@@ -67,8 +72,8 @@ router.post('/courses/:courseId/teachers', requireOrganization('administrador'),
   body('teacherUserId').isMongoId(), validate, gestionCursos.asignarDocente);
 router.put('/courses/:courseId/modules', requireOrganization('administrador', 'tutor'), protegerCsrf,
   param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
-  body('modules').isArray({ min: 1, max: 50 }),
-  body('modules.*.id').optional().isHexadecimal().isLength({ min: 24, max: 24 }),
+  body('modules').isArray({ min: 4, max: 4 }),
+  body('modules.*.id').isHexadecimal().isLength({ min: 24, max: 24 }),
   body('modules.*.title').isString().trim().isLength({ min: 2, max: 160 }),
   body('modules.*.description').optional().isString().isLength({ max: 2000 }),
   validate, gestionCursos.guardarModulos);
@@ -92,11 +97,57 @@ router.patch('/courses/:courseId/activities/:activityId', requireOrganization('a
   body('status').optional().isIn(['borrador', 'publicada', 'cerrada', 'archivada']),
   body('opensAt').optional({ nullable: true }).isISO8601(),
   body('dueAt').optional({ nullable: true }).isISO8601(),
+  body('reason').optional().isString().isLength({ max: 500 }),
   validate, gestionCursos.actualizarActividadCurso);
 router.delete('/courses/:courseId/activities/:activityId', requireOrganization('administrador', 'tutor'), protegerCsrf,
   param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
   param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
   validate, gestionCursos.eliminarActividadCurso);
+router.post('/courses/:courseId/activities/:activityId/resources', requireOrganization('tutor'), protegerCsrf,
+  param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  subirRecursoCursoActividad, recursosActividadCurso.subir);
+router.get('/courses/:courseId/activities/:activityId/resources/:resourceId/download', rolesCursos,
+  param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('resourceId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  validate, recursosActividadCurso.descargar);
+router.post('/courses/:courseId/activities/:activityId/evidences', requireOrganization('estudiante'), protegerCsrf,
+  param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  validate, subirEvidenciaCurso, entregasCurso.subir);
+router.get('/courses/:courseId/activities/:activityId/evidences', rolesCursos,
+  param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  validate, entregasCurso.listar);
+router.get('/courses/:courseId/activities/:activityId/evidences/:evidenceId/download', rolesCursos,
+  param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('evidenceId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  validate, entregasCurso.descargar);
+router.patch('/courses/:courseId/activities/:activityId/students/:studentId/deadline', requireOrganization('tutor'), protegerCsrf,
+  param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('studentId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  body('dueAt').isISO8601({ strict: true, strictSeparator: true }),
+  body('reason').optional().isString().isLength({ max: 500 }),
+  validate, entregasCurso.cambiarFechaIndividual);
+router.patch('/courses/:courseId/activities/:activityId/evidences/:evidenceId/review', requireOrganization('tutor'), protegerCsrf,
+  param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('evidenceId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  body('status').isIn(['aprobada', 'requiere_cambios']),
+  body('feedback').optional().isString().isLength({ max: 4000 }),
+  validate, entregasCurso.revisar);
+router.put('/courses/:courseId/activities/:activityId/evidences/:evidenceId/grade', requireOrganization('tutor'), protegerCsrf,
+  param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('evidenceId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  body('score').isFloat({ min: 0, max: 100 }).toFloat(),
+  body('maxScore').optional().isFloat({ gt: 0, max: 100 }).toFloat(),
+  body('feedback').optional().isString().isLength({ max: 4000 }),
+  validate, entregasCurso.calificar);
+
 router.get('/courses/:courseId/resources/:resourceId/download', rolesCursos, espaciosCurso.descargarRecurso);
 router.get('/ai-assistant', rolesCursos, espaciosCurso.obtenerAsistente);
 router.post('/ai-assistant/chat', rolesCursos, aiChatLimiter, protegerCsrf,

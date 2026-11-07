@@ -4,9 +4,10 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Administración académica de la institución en TaskFlow.">
 <title>Administración institucional | TaskFlow</title>
-<link rel="stylesheet" href="css/styles.css"><link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/styles.css?v=20261106f"><link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/organization-switcher.css"><link rel="stylesheet" href="css/admin.css">
 <link rel="stylesheet" href="css/institution-admin.css">
+<link rel="stylesheet" href="css/ui-compact.css?v=20261106i">
 </head>
 <body class="institution-admin-page">
 <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -55,7 +56,7 @@
 <div class="institution-form-grid">
 <label>Código del curso<input name="code" required minlength="2" maxlength="40" pattern="[A-Za-z0-9_-]+" placeholder="DESWEB-01"></label>
 <label>Nombre del curso<input name="name" required minlength="2" maxlength="140" placeholder="Desarrollo Web"></label>
-<label>Número de módulos<input name="moduleCount" type="number" min="1" max="50" value="16" required><small>La cantidad es independiente para cada curso (1 a 50).</small></label>
+<label>Número de unidades<input name="moduleCount" type="number" min="4" max="4" value="4" required><small>Cada curso se organiza en cuatro unidades académicas.</small></label>
 <label>Docentes responsables<select name="teacherUserIds" id="course-teachers" multiple size="4"><option value="">Cargando docentes…</option></select><small>Puedes seleccionar uno o varios docentes activos de esta institución.</small></label>
 <label class="institution-field-wide">Descripción<textarea name="description" rows="3" maxlength="4000" placeholder="Propósito y alcance del curso"></textarea></label>
 </div><div class="institution-form-actions"><button class="btn btn-primario" type="submit">Crear curso y módulos</button><button class="btn btn-secundario" id="cancel-course" type="button">Cancelar</button></div></form>
@@ -64,5 +65,5 @@
 <p class="institution-footnote">Los registros y las asignaciones se limitan al espacio institucional seleccionado. Las cuentas de acceso y membresías se gestionan desde el módulo global de usuarios.</p>
 </main>
 <footer class="institution-footer"><b>TaskFlow</b><span>Administración académica · Espacio institucional</span><span>© 2026</span></footer>
-<script src="js/ui.js" defer></script><script src="js/institution-admin.js" defer></script><script src="js/theme.js" defer></script><script src="js/organization-switcher.js" defer></script>
+<script src="js/ui.js" defer></script><script src="js/institution-admin.js?v=20261106-unidades4" defer></script><script src="js/theme.js" defer></script><script src="js/organization-switcher.js" defer></script>
 </body></html>

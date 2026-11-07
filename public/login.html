@@ -29,8 +29,9 @@
       document.documentElement.dataset.theme = 'light';
     }
   </script>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=20261106f">
   <link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/ui-compact.css?v=20261106i">
 </head>
 <body>
 
@@ -99,8 +100,16 @@
         <button type="submit" class="btn btn-primario btn-bloque">Entrar</button>
       </form>
 
-      <p class="auth-enlace"><a href="#recuperar" id="recuperar-password">¿Olvidaste tu contraseña?</a></p>
-      <p class="nota-fase">Si necesitas restablecer tu acceso, solicita ayuda al administrador de TaskFlow. La recuperación automática por correo institucional aún requiere integración del servidor.</p>
+      <p class="auth-enlace"><a href="#recuperar" id="recuperar-password" aria-controls="form-recuperar" aria-expanded="false">¿Olvidaste tu contraseña?</a></p>
+      <form id="form-recuperar" class="formulario" hidden style="display:none">
+        <div class="campo">
+          <label for="email-recuperar">Correo electrónico de tu cuenta</label>
+          <input type="email" id="email-recuperar" name="email" autocomplete="email" placeholder="tu@correo.com" required maxlength="254">
+        </div>
+        <p class="form-mensaje" id="mensaje-recuperar" role="status" aria-live="polite"></p>
+        <button type="submit" class="btn btn-primario btn-bloque">Enviar enlace de recuperación</button>
+      </form>
+      <p class="nota-fase" id="nota-recuperar" hidden style="display:none">Te enviaremos un enlace seguro a tu correo si existe una cuenta activa asociada.</p>
     </div>
   </main>
 
@@ -109,6 +118,7 @@
       <div class="footer-brand">
         <div class="logo"><span>TaskFlow</span></div>
         <p>Potenciando la productividad de equipos en crecimiento.</p>
+        <p><a href="politica-privacidad.html">Consultar política de privacidad y tratamiento de datos</a></p>
       </div>
     </div>
     <div class="footer-bottom">
@@ -118,17 +128,14 @@
 
   <script src="js/ui.js" defer></script>
   <script src="js/auth.js" defer></script>
+  <script src="js/password-reset.js?v=20261106b" defer></script>
   <script src="js/theme.js" defer></script>
   <script>
     document.querySelector('a.btn[href="index.html"]')?.addEventListener('click', function () {
       const tema = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
       this.href = 'index.html?theme=' + tema;
     });
-    document.getElementById('recuperar-password')?.addEventListener('click', function (event) {
-      event.preventDefault();
-      const nota = document.querySelector('.nota-fase');
-      if (nota) nota.textContent = 'Para recuperar tu acceso, contacta al administrador de TaskFlow desde tu correo institucional. La recuperación automática todavía no está conectada al servidor.';
-    });
+
   </script>
 </body>
 </html>

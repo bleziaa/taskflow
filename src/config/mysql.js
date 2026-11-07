@@ -1,7 +1,4 @@
-/**
- * Pool independiente para MySQL/MariaDB.
- * La conexion es opt-in hasta completar la migracion gradual de los modulos.
- */
+
 const mysql = require('mysql2/promise');
 const { env } = require('./env');
 

@@ -8,7 +8,7 @@ const Practice = require('../src/models/Practice');
 const Activity = require('../src/models/Activity');
 const Evaluation = require('../src/models/Evaluation');
 
-const PASS = 'TaskFlowDemo2026!';
+const PASS = process.env.DEMO_TEST_PASSWORD;
 const users = [
   { nombre: 'Administrador Demo', email: 'admin.pruebas@taskflow.test', role: 'administrador' },
   { nombre: 'Tutor Demo', email: 'tutor.pruebas@taskflow.test', role: 'tutor' },
@@ -26,6 +26,7 @@ async function ensureUser(data) {
 }
 
 async function run() {
+  if (!PASS || PASS.length < 12) throw new Error('Define DEMO_TEST_PASSWORD en el entorno (mínimo 12 caracteres).');
   await mongoose.connect(env.mongoUri);
   const accounts = {};
   for (const data of users) accounts[data.role + (data.email.includes('estudiante2') ? '2' : data.email.includes('estudiante1') ? '1' : '')] = await ensureUser(data);
@@ -101,7 +102,7 @@ async function run() {
     practices: await Practice.countDocuments({ _id: { $in: practices.map(p => p._id) } }),
     activities: await Activity.countDocuments({ practica: { $in: practices.map(p => p._id) } }),
     evaluations: await Evaluation.countDocuments({ practica: { $in: practices.map(p => p._id) } }),
-    demoPassword: PASS,
+    passwordConfigured: true,
     note: 'Todos los registros creados/actualizados por este script son ficticios y están identificados como demo.'
   };
   console.log(JSON.stringify(summary, null, 2));

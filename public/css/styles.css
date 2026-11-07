@@ -194,8 +194,15 @@ section {
 .nav-lista {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 8px;
 }
+
+/* Mantiene compactos los menús y filtros en todas las vistas. */
+.header .nav-lista { gap: 12px 16px !important; flex-wrap: wrap; }
+.header .nav-link { padding: 8px 10px; border-radius: 9px; }
+.header .nav-lista > li { min-width: 0; }
+:is(.filters, .filter-row, .filter-bar, .filters-row, .filtros, .filtros-row, .filtros-barra, .search-filters, .teacher-filters) { gap: 8px !important; }
+
 
 .nav-link {
   font-size: 0.95rem;
@@ -1454,3 +1461,12 @@ tbody tr:hover {
     width: 100%;
   }
 }
+
+
+/* Navegación compacta y consistente en todas las pantallas. */
+.header .nav-main{min-width:0;gap:8px}
+.header .nav-lista{gap:8px 10px!important;align-items:center}
+.header .nav-lista>li{display:flex;align-items:center}
+.header .nav-link{padding:8px 9px;font-size:.9rem;white-space:nowrap}
+.header .nav-lista .btn{min-height:36px;padding:8px 12px;white-space:nowrap}
+@media(max-width:760px){.header .nav-lista{gap:7px!important}.header .nav-link{padding:9px 10px}}

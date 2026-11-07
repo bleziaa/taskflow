@@ -58,7 +58,7 @@ test('solo el administrador general puede consultar y cambiar la marca global', 
   assert.equal((await agent.get('/api/admin/branding/platform')).body.data.branding.primaryColor, '#6d4bd1');
 });
 
-test('la identidad institucional se guarda separada y conserva el color principal de TaskFlow', async () => {
+test('la identidad institucional se guarda separada y permite aplicar su propio color principal', async () => {
   const agent = request.agent(server);
   await login(agent, admin.email);
   const org = await Organization.create({ nombre: 'Universidad Demo', codigo: 'UNI-DEMO', creadoPor: admin._id });
@@ -67,8 +67,28 @@ test('la identidad institucional se guarda separada y conserva el color principa
   });
   assert.equal(saved.status, 200);
   assert.equal(saved.body.data.branding.secondaryColor, '#456789');
-  assert.equal(saved.body.data.branding.primaryColor, '#6d4bd1');
+  assert.equal(saved.body.data.branding.primaryColor, '#ffffff');
   assert.equal(await Branding.countDocuments({ scope: 'organization', organization: org._id }), 1);
+});
+
+test('sube y guarda el logotipo de una organización con URL local', async () => {
+  const agent = request.agent(server);
+  await login(agent, admin.email);
+  const org = await Organization.create({ nombre: 'Universidad de Cartagena', codigo: 'UDEC', creadoPor: admin._id });
+  const png = Buffer.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1]);
+  const uploaded = await agent.post('/api/admin/branding/organizations/' + org._id + '/upload')
+    .set('X-CSRF-Token', await csrf(agent))
+    .field('field', 'logoUrl')
+    .attach('image', png, { filename: 'udec.png', contentType: 'image/png' });
+  assert.equal(uploaded.status, 201);
+  const logoUrl = uploaded.body.data.asset.url;
+  assert.equal((await agent.get(logoUrl)).status, 200);
+  const saved = await put(agent, '/api/admin/branding/organizations/' + org._id, {
+    displayName: 'Universidad de Cartagena', logoUrl, primaryColor: '#027f3e'
+  });
+  assert.equal(saved.status, 200);
+  assert.equal(saved.body.data.branding.logoUrl, logoUrl);
+  assert.equal(saved.body.data.branding.primaryColor, '#027f3e');
 });
 
 test('rechaza colores inválidos y URLs con protocolos no seguros', async () => {

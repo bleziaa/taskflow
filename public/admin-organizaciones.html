@@ -1,35 +1,328 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#201c2b"><title>Organizaciones | TaskFlow</title><link rel="stylesheet" href="css/styles.css"><link rel="stylesheet" href="css/theme.css"><link rel="stylesheet" href="css/admin.css">
-  <link rel="stylesheet" href="css/admin-polish.css"></head>
-<body>
-<header class="header"><div class="header-container"><a class="logo" href="admin.html"><span>TaskFlow</span></a><nav class="nav-main"><ul class="nav-lista"><li><a class="nav-link" href="admin.html">Centro de control</a></li><li><a class="nav-link" href="admin-organizaciones.html" aria-current="page">Organizaciones</a></li><li><a class="nav-link" href="admin-usuarios.html">Usuarios</a></li><li><a class="nav-link" href="admin-identidad.html">Identidad visual</a></li><li><span class="usuario-nombre" id="admin-nombre">Administrador general</span></li><li><button class="btn btn-secundario btn-sm" id="btn-logout" type="button">Cerrar sesión</button></li></ul></nav></div></header>
-<main class="admin-page">
-<a class="admin-volver" href="admin.html">← <span>Centro de control</span></a>
-<section class="admin-hero"><div><span class="admin-eyebrow">Gestión institucional · 01</span><h1>Organizaciones</h1><p class="panel-sub">Registra instituciones, administra sus miembros y asigna responsables. Cada institución conserva su propio espacio de gestión.</p></div><div class="admin-hero-actions"><span class="admin-status" id="estado-modulo">Conectando con TaskFlow</span><button class="btn btn-primario" id="btn-nueva-organizacion" type="button">＋ Nueva organización</button></div></section>
-<section class="admin-metricas" aria-label="Indicadores institucionales">
-<article class="admin-metrica"><span>Organizaciones registradas</span><strong id="metric-organizaciones">—</strong><small>Instituciones cliente</small></article>
-<article class="admin-metrica"><span>Usuarios vinculados</span><strong id="metric-usuarios">—</strong><small>Asignaciones activas</small></article>
-<article class="admin-metrica"><span>Administradores asignados</span><strong id="metric-admins">—</strong><small>Responsables institucionales</small></article>
-</section>
-<section class="admin-surface" id="form-organizacion-panel" hidden><div class="admin-section-head" style="margin-top:0"><div><h2 id="form-org-titulo">Registrar organización</h2><p>Completa los datos principales de la institución.</p></div></div>
-<form id="form-organizacion"><div class="admin-form-grid">
-<label class="admin-field">Nombre de la institución<input name="nombre" required minlength="2" maxlength="140" placeholder="Universidad o institución"></label>
-<label class="admin-field">Código único<input name="codigo" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_-]+" placeholder="UNIVERSIDAD-01"></label>
-<label class="admin-field">Correo de contacto<input name="emailContacto" type="email" placeholder="contacto@institucion.edu"></label>
-<label class="admin-field">Teléfono<input name="telefono" maxlength="25" placeholder="+57 300 000 0000"></label>
-<label class="admin-field">Ciudad<input name="ciudad" maxlength="100" placeholder="Cartagena"></label>
-<label class="admin-field">Dirección<input name="direccion" maxlength="180" placeholder="Dirección institucional"></label>
-<label class="admin-field admin-field-wide">Descripción<textarea name="descripcion" rows="3" maxlength="1000" placeholder="Información general de la institución"></textarea></label>
-</div><div class="admin-form-actions"><button class="btn btn-primario" type="submit">Guardar organización</button><button class="btn btn-secundario" id="btn-cancelar-org" type="button">Cancelar</button></div></form></section>
-<section class="admin-surface"><div class="admin-section-head" style="margin-top:0"><div><h2>Directorio de organizaciones</h2><p>Instituciones registradas y estado de sus vínculos.</p></div><label class="admin-busqueda">Buscar institución<input id="buscar-organizacion" type="search" placeholder="Nombre, código o ciudad"></label></div>
-<div id="lista-organizaciones" class="org-lista" aria-live="polite"><div class="admin-vacio"><span>◌</span><h3>Cargando organizaciones…</h3><p>Estamos consultando los registros de TaskFlow.</p></div></div></section>
-<section class="admin-surface" id="detalle-organizacion" hidden><div class="admin-section-head" style="margin-top:0"><div><span class="admin-eyebrow">Espacio institucional</span><h2 id="detalle-nombre">Organización</h2><p id="detalle-meta" class="panel-sub"></p></div><button class="btn btn-secundario" id="btn-cerrar-detalle" type="button">Cerrar detalle</button></div>
-<div class="admin-metricas org-detail-metrics"><article class="admin-metrica"><span>Miembros activos</span><strong id="detalle-miembros">0</strong></article><article class="admin-metrica"><span>Administradores</span><strong id="detalle-admins">0</strong></article><article class="admin-metrica"><span>Estado institucional</span><strong id="detalle-estado">Activa</strong></article></div>
-<div class="org-members-head"><div><h3>Miembros y administradores</h3><p>Una cuenta puede tener un rol distinto en cada institución.</p></div></div>
-<form id="form-miembro" class="org-member-form"><label class="admin-field">Cuenta docente o estudiante<select name="usuarioId" id="miembro-usuario" required><option value="">Selecciona una cuenta</option></select><small>Solo aparecen cuentas activas de docentes y estudiantes. Las cuentas de administrador general no se asignan desde aquí.</small></label><label class="admin-field">Rol dentro de esta institución<select name="role" required><option value="administrador">Administrador institucional</option><option value="tutor">Docente / tutor</option><option value="estudiante">Estudiante</option></select><small>Este rol define los permisos de la persona en esta institución, no en toda la plataforma.</small></label><button class="btn btn-primario" type="submit">＋ Asignar miembro</button></form><p id="miembro-feedback" class="form-mensaje" role="status" aria-live="polite"></p>
-<div id="tabla-miembros" class="org-members-list"></div>
-<div class="admin-nota"><span class="admin-nota-icon">i</span><div><strong>Alcance de los permisos</strong><br>El rol asignado aquí pertenece únicamente a esta organización. No cambia el rol global ni elimina la cuenta del usuario.</div></div>
-</section>
-<div class="admin-nota"><span class="admin-nota-icon">i</span><div><strong>Organizaciones y empresas de prácticas son entidades diferentes.</strong><br>La organización es la institución cliente de TaskFlow. Las empresas donde se realizan prácticas se registrarán dentro del espacio institucional correspondiente.</div></div>
-<p id="admin-mensaje" class="form-mensaje" role="status" aria-live="polite"></p>
-</main><script src="js/admin-shell.js" defer></script><script src="js/theme.js" defer></script><script src="js/admin-organizaciones.js" defer></script></body></html>
+<html lang="es">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <meta content="#201c2b" name="theme-color"/>
+  <title>
+   Organizaciones | TaskFlow
+  </title>
+  <link href="css/styles.css?v=20261106f" rel="stylesheet"/>
+  <link href="css/theme.css" rel="stylesheet"/>
+  <link href="css/admin.css" rel="stylesheet"/>
+  <link href="css/admin-polish.css" rel="stylesheet"/>
+  <link href="css/ui-compact.css?v=20261106i" rel="stylesheet"/>
+ </head>
+ <body>
+  <header class="header">
+   <div class="header-container">
+    <a class="logo" href="admin.html">
+     <span>
+      TaskFlow
+     </span>
+    </a>
+    <nav class="nav-main">
+     <ul class="nav-lista">
+      <li>
+       <a class="nav-link" href="admin.html">
+        Centro de control
+       </a>
+      </li>
+      <li>
+       <a aria-current="page" class="nav-link" href="admin-organizaciones.html">
+        Organizaciones
+       </a>
+      </li>
+      <li>
+       <a class="nav-link" href="admin-usuarios.html">
+        Usuarios
+       </a>
+      </li>
+      <li>
+       <a class="nav-link" href="admin-identidad.html">
+        Identidad visual
+       </a>
+      </li>
+      <li>
+       <span class="usuario-nombre" id="admin-nombre">
+        Administrador general
+       </span>
+      </li>
+      <li>
+       <button class="btn btn-secundario btn-sm" id="btn-logout" type="button">
+        Cerrar sesión
+       </button>
+      </li>
+     </ul>
+    </nav>
+   </div>
+  </header>
+  <main class="admin-page">
+   <a class="admin-volver" href="admin.html">
+    ←
+    <span>
+     Centro de control
+    </span>
+   </a>
+   <section class="admin-hero">
+    <div>
+     <span class="admin-eyebrow">
+      Gestión institucional · 01
+     </span>
+     <h1>
+      Organizaciones
+     </h1>
+     <p class="panel-sub">
+      Registra instituciones, administra sus miembros y asigna responsables. Cada institución conserva su propio espacio de gestión.
+     </p>
+    </div>
+    <div class="admin-hero-actions">
+     <span class="admin-status" id="estado-modulo">
+      Conectando con TaskFlow
+     </span>
+     <button class="btn btn-primario" id="btn-nueva-organizacion" type="button">
+      ＋ Nueva organización
+     </button>
+    </div>
+   </section>
+   <section aria-label="Indicadores institucionales" class="admin-metricas">
+    <article class="admin-metrica">
+     <span>
+      Organizaciones registradas
+     </span>
+     <strong id="metric-organizaciones">
+      —
+     </strong>
+     <small>
+      Instituciones cliente
+     </small>
+    </article>
+    <article class="admin-metrica">
+     <span>
+      Usuarios vinculados
+     </span>
+     <strong id="metric-usuarios">
+      —
+     </strong>
+     <small>
+      Asignaciones activas
+     </small>
+    </article>
+    <article class="admin-metrica">
+     <span>
+      Administradores asignados
+     </span>
+     <strong id="metric-admins">
+      —
+     </strong>
+     <small>
+      Responsables institucionales
+     </small>
+    </article>
+   </section>
+   <section class="admin-surface" hidden="" id="form-organizacion-panel">
+    <div class="admin-section-head" style="margin-top:0">
+     <div>
+      <h2 id="form-org-titulo">
+       Registrar organización
+      </h2>
+      <p>
+       Completa los datos principales de la institución.
+      </p>
+     </div>
+    </div>
+    <form id="form-organizacion">
+     <div class="admin-form-grid">
+      <label class="admin-field">
+       Nombre de la institución
+       <input maxlength="140" minlength="2" name="nombre" placeholder="Universidad o institución" required=""/>
+      </label>
+      <label class="admin-field">
+       Código único
+       <input maxlength="30" minlength="3" name="codigo" pattern="[A-Za-z0-9_-]+" placeholder="UNIVERSIDAD-01" required=""/>
+      </label>
+      <label class="admin-field">
+       Correo de contacto
+       <input name="emailContacto" placeholder="contacto@institucion.edu" type="email"/>
+      </label>
+      <label class="admin-field">
+       Teléfono
+       <input maxlength="25" name="telefono" placeholder="+57 300 000 0000"/>
+      </label>
+      <label class="admin-field">
+       Ciudad
+       <input maxlength="100" name="ciudad" placeholder="Cartagena"/>
+      </label>
+      <label class="admin-field">
+       Dirección
+       <input maxlength="180" name="direccion" placeholder="Dirección institucional"/>
+      </label>
+      <label class="admin-field admin-field-wide">
+       Descripción
+       <textarea maxlength="1000" name="descripcion" placeholder="Información general de la institución" rows="3"></textarea>
+      </label>
+     </div>
+     <div class="admin-form-actions">
+      <button class="btn btn-primario" type="submit">
+       Guardar organización
+      </button>
+      <button class="btn btn-secundario" id="btn-cancelar-org" type="button">
+       Cancelar
+      </button>
+     </div>
+    </form>
+   </section>
+   <section class="admin-surface">
+    <div class="admin-section-head" style="margin-top:0">
+     <div>
+      <h2>
+       Directorio de organizaciones
+      </h2>
+      <p>
+       Instituciones registradas y estado de sus vínculos.
+      </p>
+     </div>
+     <label class="admin-busqueda">
+      Buscar institución
+      <input id="buscar-organizacion" placeholder="Nombre, código o ciudad" type="search"/>
+     </label>
+    </div>
+    <div aria-live="polite" class="org-lista" id="lista-organizaciones">
+     <div class="admin-vacio">
+      <span>
+       ◌
+      </span>
+      <h3>
+       Cargando organizaciones…
+      </h3>
+      <p>
+       Estamos consultando los registros de TaskFlow.
+      </p>
+     </div>
+    </div>
+   </section>
+   <section class="admin-surface" hidden="" id="detalle-organizacion">
+    <div class="admin-section-head" style="margin-top:0">
+     <div>
+      <span class="admin-eyebrow">
+       Espacio institucional
+      </span>
+      <h2 id="detalle-nombre">
+       Organización
+      </h2>
+      <p class="panel-sub" id="detalle-meta">
+      </p>
+     </div>
+     <button class="btn btn-secundario" id="btn-cerrar-detalle" type="button">
+      Cerrar detalle
+     </button>
+    </div>
+    <div class="admin-metricas org-detail-metrics">
+     <article class="admin-metrica">
+      <span>
+       Miembros activos
+      </span>
+      <strong id="detalle-miembros">
+       0
+      </strong>
+     </article>
+     <article class="admin-metrica">
+      <span>
+       Administradores
+      </span>
+      <strong id="detalle-admins">
+       0
+      </strong>
+     </article>
+     <article class="admin-metrica">
+      <span>
+       Estado institucional
+      </span>
+      <strong id="detalle-estado">
+       Activa
+      </strong>
+     </article>
+    </div>
+    <div class="org-members-head">
+     <div>
+      <h3>
+       Miembros y administradores
+      </h3>
+      <p>
+       Una cuenta puede tener un rol distinto en cada institución.
+      </p>
+     </div>
+    </div>
+    <form class="org-member-form" id="form-miembro">
+     <label class="admin-field">
+      Cuenta docente o estudiante
+      <select id="miembro-usuario" name="usuarioId" required="">
+       <option value="">
+        Selecciona una cuenta
+       </option>
+      </select>
+      <small>
+       Solo aparecen cuentas activas de docentes y estudiantes. Las cuentas de administrador general no se asignan desde aquí.
+      </small>
+     </label>
+     <label class="admin-field">
+      Rol dentro de esta institución
+      <select name="role" required="">
+       <option value="administrador">
+        Administrador institucional
+       </option>
+       <option value="tutor">
+        Docente / tutor
+       </option>
+       <option value="estudiante">
+        Estudiante
+       </option>
+      </select>
+      <small>
+       Este rol define los permisos de la persona en esta institución, no en toda la plataforma.
+      </small>
+     </label>
+     <button class="btn btn-primario" type="submit">
+      ＋ Asignar miembro
+     </button>
+    </form>
+    <p aria-live="polite" class="form-mensaje" id="miembro-feedback" role="status">
+    </p>
+    <div class="org-members-list" id="tabla-miembros">
+    </div>
+    <div class="admin-nota">
+     <span class="admin-nota-icon">
+      i
+     </span>
+     <div>
+      <strong>
+       Alcance de los permisos
+      </strong>
+      <br/>
+      El rol asignado aquí pertenece únicamente a esta organización. No cambia el rol global ni elimina la cuenta del usuario.
+     </div>
+    </div>
+   </section>
+   <div class="admin-nota">
+    <span class="admin-nota-icon">
+     i
+    </span>
+    <div>
+     <strong>
+      Organizaciones y empresas de prácticas son entidades diferentes.
+     </strong>
+     <br/>
+     La organización es la institución cliente de TaskFlow. Las empresas donde se realizan prácticas se registrarán dentro del espacio institucional correspondiente.
+    </div>
+   </div>
+   <p aria-live="polite" class="form-mensaje" id="admin-mensaje" role="status">
+   </p>
+  </main>
+  <script defer="" src="js/admin-shell.js">
+  </script>
+  <script defer="" src="js/theme.js">
+  </script>
+  <script defer="" src="js/admin-organizaciones.js">
+  </script>
+ </body>
+</html>

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Organization = require('../models/Organization');
 const Membership = require('../models/OrganizationMembership');
 const User = require('../models/User');
+const Branding = require('../models/Branding');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -57,4 +58,32 @@ const limpiarOrganizacionActiva = asyncHandler(async (req, res) => {
   res.json({ ok: true, data: { organizacionActiva: null } });
 });
 
-module.exports = { listarOrganizacionesDelUsuario, listarTutoresDeOrganizacion, seleccionarOrganizacionActiva, limpiarOrganizacionActiva };
+const obtenerIdentidadOrganizacionActiva = asyncHandler(async (req, res) => {
+  const organizationId = req.session.activeOrganizationId;
+  if (!organizationId) return res.json({ ok: true, data: { branding: null } });
+  const org = await Organization.findById(organizationId).select('_id nombre codigo estado').lean();
+  if (!org || org.estado !== 'activa') return res.json({ ok: true, data: { branding: null } });
+  const saved = await Branding.findOne({ scope: 'organization', organization: org._id }).lean();
+  const normalized = org.nombre.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();
+  const preset = normalized.includes('universidad nacional')
+    ? { primaryColor: '#009638', secondaryColor: '#006b2c', accentColor: '#f3ae00' }
+    : normalized.includes('universidad de cartagena')
+      ? { primaryColor: '#027f3e', secondaryColor: '#015b2d', accentColor: '#f7f028' }
+      : {};
+  const branding = {
+    displayName: org.nombre,
+    logoUrl: saved?.logoUrl || (normalized.includes('universidad de cartagena') ? '/media/branding/unicartagena.png' : ''),
+    primaryColor: preset.primaryColor || '#6d4bd1',
+    secondaryColor: preset.secondaryColor || '#8b75dc',
+    accentColor: preset.accentColor || '#26a69a',
+    ...(saved || {}),
+    ...(preset.primaryColor && (!saved?.primaryColor || saved.primaryColor === '#6d4bd1') ? { primaryColor: preset.primaryColor } : {}),
+    ...(preset.secondaryColor && (!saved?.secondaryColor || saved.secondaryColor === '#8b75dc') ? { secondaryColor: preset.secondaryColor } : {}),
+    ...(preset.accentColor && (!saved?.accentColor || saved.accentColor === '#26a69a') ? { accentColor: preset.accentColor } : {}),
+    organization: String(org._id),
+  };
+  res.set('Cache-Control', 'no-store');
+  res.json({ ok: true, data: { organizacion: org, branding } });
+});
+
+module.exports = { listarOrganizacionesDelUsuario, listarTutoresDeOrganizacion, seleccionarOrganizacionActiva, limpiarOrganizacionActiva, obtenerIdentidadOrganizacionActiva };
