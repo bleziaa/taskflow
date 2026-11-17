@@ -184,7 +184,52 @@ html[data-theme="dark"] .header .nav-lista .nav-link[aria-current="page"] {
 }
 @media (prefers-reduced-motion: reduce) {
   .admin-page .admin-acceso,
+  .admin-page .admin-metrica,
   .admin-page .btn,
-  .header .nav-lista .nav-link { transition: none; }
-  .admin-page .btn:hover { transform: none; }
+  .header .nav-lista .nav-link { transition: none; animation: none; }
+  .admin-page .btn:hover,
+  .admin-page .admin-metrica:hover,
+  .admin-page .admin-acceso:hover { transform: none; }
+}
+
+/* Jerarquía equilibrada y entrada discreta del centro de control. */
+.admin-page .admin-metricas {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+.admin-page .admin-metrica {
+  min-width: 0;
+  min-height: 132px;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.admin-page .admin-metrica:hover {
+  transform: translateY(-3px);
+  border-color: var(--primario-borde);
+  box-shadow: 0 14px 32px rgba(35, 22, 57, .09);
+}
+.admin-page .admin-acceso {
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.admin-page > .admin-hero,
+.admin-page > .admin-section-head,
+.admin-page > .admin-metricas,
+.admin-page > .admin-accesos,
+.admin-page > .admin-surface {
+  animation: taskflow-admin-enter .48s cubic-bezier(.2,.75,.25,1) both;
+}
+.admin-page > .admin-section-head:nth-of-type(2) { animation-delay: .06s; }
+.admin-page > .admin-metricas { animation-delay: .1s; }
+.admin-page > .admin-accesos { animation-delay: .16s; }
+.admin-page > .admin-surface { animation-delay: .2s; }
+@keyframes taskflow-admin-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 900px) {
+  .admin-page .admin-metricas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .admin-page .admin-metricas { grid-template-columns: 1fr; }
 }

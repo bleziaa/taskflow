@@ -4,6 +4,7 @@ const {
   obtenerCsrfToken,
   iniciarSesion,
   obtenerSesion,
+  actualizarNombrePropio,
   cambiarPassword,
   solicitarRestablecimientoPassword,
   confirmarRestablecimientoPassword,
@@ -28,6 +29,7 @@ router.post('/login', loginLimiter, protegerCsrf, validarLogin, validate, inicia
 router.post('/forgot-password', passwordResetLimiter, protegerCsrf, solicitarRestablecimientoPassword);
 router.post('/reset-password', passwordResetLimiter, protegerCsrf, confirmarRestablecimientoPassword);
 router.get('/me', requireAuth, obtenerSesion);
+router.patch('/profile', requireAuth, protegerCsrf, actualizarNombrePropio);
 router.post('/change-password', requireAuth, protegerCsrf, cambiarPassword);
 router.use('/organizations', requireAuth, organizationSelectionRoutes);
 router.post('/logout', protegerCsrf, cerrarSesion);

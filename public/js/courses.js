@@ -167,7 +167,7 @@
     if (state.role === 'estudiante' && activity.status === 'publicada') {
       const delivery = el('section', null, 'course-evidence-submit');
       delivery.append(el('b', 'Mi entrega'));
-      const form = el('form', null, 'course-evidence-form');
+      const form = el('form', null, 'course-evidence-form'); form.hidden = true;
       const file = el('input'); file.type = 'file'; file.required = true; file.accept = '.pdf,.docx,.zip,application/pdf,application/zip,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       const button = el('button', 'Enviar actividad', 'btn btn-primario btn-sm'); button.type = 'submit';
       form.append(file, button);
@@ -194,7 +194,7 @@
         finally { button.disabled = false; }
       });
       delivery.append(form);
-      const statusLine = el('p', 'Puedes enviar una entrega. Si el docente solicita correcciones, podrás volver a subir una versión.', 'course-empty');
+      const statusLine = el('p', 'Consultando el estado de tu entrega…', 'course-empty');
       delivery.append(statusLine);
       const myStatus = el('div', null, 'course-my-evidence');
       myStatus.append(el('small', 'Consultando el estado de tu entrega…', 'course-empty'));
@@ -206,18 +206,60 @@
           const evidence = (result.evidences || [])[0];
           if (evidence?.dueAt) myStatus.append(el('small', 'Fecha límite: ' + formatDate(evidence.dueAt) + (evidence.deadlineCustomized ? ' · Plazo individual' : '')));
           if (!evidence || !evidence.id) {
+            form.hidden = false;
+            statusLine.textContent = evidence?.status === 'no_entregada'
+              ? 'El plazo ya venció, pero puedes consultar con el docente si admite una entrega.'
+              : 'Puedes enviar tu actividad. Si el docente solicita correcciones, podrás subir una versión nueva.';
             myStatus.append(el('small', evidence?.status === 'no_entregada' ? 'No registramos una entrega y el plazo ya venció.' : 'Aún no has enviado tu trabajo.', 'course-empty'));
             return;
           }
-          const statusText = evidence.status === 'aprobada' ? 'Actividad aprobada' : evidence.status === 'reprobada' ? 'Actividad reprobada · Perdida' : evidence.status === 'requiere_cambios' ? 'Tu entrega está por corregir. Consulta directamente con el docente los ajustes necesarios.' : 'Tu entrega está pendiente de revisión';
+          const needsCorrection = evidence.status === 'requiere_cambios';
+          const canEditSubmission = ['pendiente', 'requiere_cambios'].includes(evidence.status);
+          const withdrawn = evidence.status === 'retirada';
+          if (canEditSubmission || withdrawn) {
+            form.hidden = false;
+            button.textContent = needsCorrection ? 'Enviar corrección' : evidence.status === 'pendiente' ? 'Reemplazar archivo' : 'Enviar actividad';
+            statusLine.textContent = needsCorrection
+              ? 'El docente solicitó correcciones. Adjunta una versión corregida para volver a entregar.'
+              : withdrawn
+                ? 'Retiraste tu entrega. Puedes cargar el archivo correcto.'
+                : 'Tu entrega aún no ha sido revisada. Si seleccionaste un archivo equivocado, puedes reemplazarlo o retirarlo.';
+          } else {
+            form.remove();
+            statusLine.textContent = evidence.status === 'aprobada'
+              ? 'Ya enviada: tu actividad fue aprobada.'
+              : 'Ya enviada: la actividad fue calificada. Consulta la retroalimentación.';
+          }
+          const statusText = evidence.status === 'aprobada' ? 'Actividad aprobada' : evidence.status === 'reprobada' ? 'Actividad reprobada · Perdida' : needsCorrection ? 'Entrega requiere correcciones' : withdrawn ? 'Entrega retirada' : 'Ya enviada · Pendiente de revisión';
           myStatus.append(el('b', statusText), el('small', evidence.originalName + ' · ' + formatDate(evidence.submittedAt) + (evidence.late ? ' · Entrega tardía' : '')));
+          if (evidence.downloadUrl && !withdrawn) { const download = el('a', 'Descargar mi entrega'); download.href = evidence.downloadUrl; download.className = 'course-evidence-download'; myStatus.append(download); }
+          if (canEditSubmission) {
+            const withdraw = el('button', 'Eliminar entrega y volver a subir', 'btn btn-secundario btn-sm');
+            withdraw.type = 'button';
+            withdraw.addEventListener('click', async () => {
+              if (!confirm('¿Retirar esta entrega? El archivo dejará de contar como enviado y podrás cargar otro.')) return;
+              withdraw.disabled = true;
+              try {
+                const token = (await api('/api/auth/csrf-token')).csrfToken;
+                await api('/api/organization/courses/' + course.id + '/activities/' + activity.id + '/evidences/' + evidence.id, {
+                  method: 'DELETE', headers: { 'X-CSRF-Token': token }
+                });
+                await loadCourses();
+                note('Entrega retirada. Ya puedes subir el archivo correcto.', 'success');
+              } catch (error) { note(error.message, 'error'); withdraw.disabled = false; }
+            });
+            myStatus.append(withdraw);
+          }
+          if (evidence.feedback) myStatus.append(el('small', 'Observaciones del docente: ' + evidence.feedback));
           if (evidence.score !== null) {
             myStatus.append(el('p', 'Calificación: ' + evidence.score + ' / ' + evidence.maxScore));
             const outcome = gradeOutcome(evidence);
             if (outcome) myStatus.append(el('b', outcome.label, 'course-grade-outcome ' + outcome.className));
           }
-          if (evidence.status === 'requiere_cambios') myStatus.append(el('small', 'Puedes volver a enviar una versión corregida.', 'course-empty'));
-        } catch (error) { myStatus.replaceChildren(el('small', error.message, 'course-empty')); }
+          if (needsCorrection) myStatus.append(el('small', 'Puedes volver a enviar una versión corregida.', 'course-empty'));
+          if (evidence.status === 'pendiente') myStatus.append(el('small', 'Puedes reemplazar o retirar el archivo mientras el docente no lo haya revisado.', 'course-empty'));
+          if (withdrawn) myStatus.append(el('small', 'La versión anterior se conserva en el historial de entregas.', 'course-empty'));
+        } catch (error) { form.remove(); statusLine.textContent = 'No pudimos verificar el estado de tu entrega. Actualiza la página antes de intentar enviar.'; myStatus.replaceChildren(el('small', error.message, 'course-empty')); }
       })();
       item.append(delivery);
     }
@@ -259,6 +301,12 @@
               );
               card.append(head, el('small', (evidence.studentCode || '') + ' · Fecha límite: ' + (evidence.dueAt ? formatDate(evidence.dueAt) : 'Sin fecha límite')));
               renderIndividualDeadline(course, activity, evidence, card);
+              inboxBody.append(card);
+              return;
+            }
+            if (evidence.status === 'retirada') {
+              head.append(el('b', evidence.studentName || 'Estudiante'), el('span', 'Entrega retirada por el estudiante', 'course-activity-status course-evidence-status is-missing'));
+              card.append(head, el('small', (evidence.studentCode || '') + ' · Archivo retirado: ' + evidence.originalName + ' · ' + formatDate(evidence.submittedAt)));
               inboxBody.append(card);
               return;
             }

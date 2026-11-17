@@ -82,6 +82,7 @@ const obtenerPractica = asyncHandler(async (req, res) => {
 
 const crearPractica = asyncHandler(async (req, res) => {
   const data = datosPermitidos(req.body);
+  if (req.user.role === 'tutor') data.tutor = req.user._id;
   const relaciones = await validarRelaciones(data, null, req.organization?._id || null);
   const existente = await Practice.exists({ estudiante: relaciones.estudiante._id, ...(req.organization ? { organizationId: req.organization._id } : {}), estado: { $in: ESTADOS_ACTIVOS } });
   if (existente && ESTADOS_ACTIVOS.includes(data.estado || 'planificada')) {

@@ -20,6 +20,14 @@
   --texto-secundario: var(--texto-suave);
   --bg-card: var(--bg-tarjeta);
   --borde: var(--borde-suave);
+  /* Acciones y saltos de navegación: derivados del color de marca, AA en claro */
+  --accion-fondo: color-mix(in srgb, var(--primario) 62%, #160c24);
+  --accion-fondo-hover: color-mix(in srgb, var(--primario-oscuro) 62%, #160c24);
+  --accion-texto: #ffffff;
+  --etiqueta-color: color-mix(in srgb, var(--primario) 62%, #160c24);
+  --peligro-texto: #b32d2d;
+  --peligro-accion-fondo: #b32d2d;
+  --peligro-accion-texto: #ffffff;
 }
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -41,14 +49,22 @@ html[data-theme="dark"] {
   --texto-secundario: var(--texto-suave);
   --bg-card: var(--bg-tarjeta);
   --borde: var(--borde-suave);
+  /* Acciones y saltos de navegación: derivados del color de marca, AA en oscuro */
+  --accion-fondo: color-mix(in srgb, var(--primario) 55%, #ffffff);
+  --accion-fondo-hover: color-mix(in srgb, var(--primario) 75%, #ffffff);
+  --accion-texto: #1b1229;
+  --etiqueta-color: color-mix(in srgb, var(--primario) 42%, #ffffff);
+  --peligro-texto: #ff9a9a;
+  --peligro-accion-fondo: #ff9a9a;
+  --peligro-accion-texto: #2a0d10;
 }
 body, .header, .footer, .tarjeta, .panel, .bloque, .auth-card,
 .dashboard-contenido > section, .dashboard-sidebar, .modal, .practice-card,
 .activity-card, .evidence-item, .estadisticas-card, .paso {
   transition: background-color .22s ease, color .22s ease, border-color .22s ease, box-shadow .22s ease;
 }
-.btn-primario { background: var(--primario); box-shadow: 0 4px 12px rgba(104,65,184,.22); }
-.btn-primario:hover { background: var(--primario-oscuro); }
+.btn-primario { background: var(--accion-fondo); color: var(--accion-texto); box-shadow: 0 4px 12px rgba(104,65,184,.22); }
+.btn-primario:hover { background: var(--accion-fondo-hover); color: var(--accion-texto); }
 .nav-link:hover, .nav-link[aria-current="page"] { color: var(--primario); }
 .hero-titulo { color: var(--texto-principal); }
 .hero-bg-accent {
@@ -331,7 +347,10 @@ html[data-theme="dark"] .auth-card { box-shadow: 0 18px 40px rgba(0,0,0,.28); }
 
 /* El morado corporativo se aplica también a los controles nativos y estados. */
 ::selection { background: var(--primario-tenue); color: var(--texto-principal); }
-.btn-primario, .btn-primario:visited { color: #fff; }
+.btn-primario, .btn-primario:visited { color: var(--accion-texto); }
+.skip-link { background: var(--accion-fondo); color: var(--accion-texto); }
+.btn-peligro { color: var(--peligro-texto); }
+.btn-peligro:hover { background: var(--peligro-accion-fondo); color: var(--peligro-accion-texto); }
 .btn-primario:focus-visible, .theme-toggle:focus-visible {
   outline-color: var(--primario-borde);
 }
@@ -345,4 +364,4 @@ html[data-theme="dark"] :is(.course-empty,.teacher-home-empty,.course-descriptio
 html[data-theme="dark"] .course-module-row { background: var(--bg-sutil); border-color: var(--borde-suave); }
 html[data-theme="dark"] .course-module-count { background: rgba(154,120,226,.2); color: #d9c9ff; }
 html[data-theme="dark"] .course-resource,html[data-theme="dark"] .course-evidence-card,html[data-theme="dark"] .course-activity-materials,html[data-theme="dark"] .course-evidence-submit,html[data-theme="dark"] .course-evidence-inbox { border-color: var(--borde-suave); }
-html[data-theme="dark"] .course-resource a,html[data-theme="dark"] .teacher-home-link,html[data-theme="dark"] .teacher-course-actions a { color: #c5aaff; }
+html[data-theme="dark"] .course-resource a,html[data-theme="dark"] .teacher-home-link,html[data-theme="dark"] .teacher-course-actions a { color: var(--etiqueta-color); }

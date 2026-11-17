@@ -26,6 +26,18 @@ const activityChangeSchema = new mongoose.Schema({
   modificadoEn: { type: Date, default: Date.now },
 }, { _id: true });
 
+const gradeReviewSchema = new mongoose.Schema({
+  motivo: { type: String, required: true, trim: true, minlength: 10, maxlength: 2000 },
+  estado: { type: String, enum: ['pendiente', 'aceptada', 'rechazada'], default: 'pendiente', index: true },
+  solicitadaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  solicitadaEn: { type: Date, default: Date.now },
+  calificacionOriginal: { type: Number, min: 0, max: 5, required: true },
+  respuestaTutor: { type: String, trim: true, default: '', maxlength: 2000 },
+  respondidaPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  respondidaEn: { type: Date, default: null },
+  calificacionNueva: { type: Number, min: 0, max: 5, default: null },
+}, { timestamps: false });
+
 const activitySchema = new mongoose.Schema({
   organizationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', index: true, default: null },
   practica: { type: mongoose.Schema.Types.ObjectId, ref: 'Practice', required: true, index: true },
@@ -41,6 +53,7 @@ const activitySchema = new mongoose.Schema({
   autoevaluacion: { type: selfAssessmentSchema, default: () => ({}) },
   valoracionEmpresarial: { type: assessmentSchema, default: () => ({}) },
   evaluacionTutor: { type: assessmentSchema, default: () => ({}) },
+  solicitudesRevisionNota: { type: [gradeReviewSchema], default: [] },
   creadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true });
 activitySchema.index({ practica: 1, moduloAcademicoId: 1, fechaLimite: 1 });

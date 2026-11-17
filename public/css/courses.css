@@ -151,3 +151,6 @@
 .course-activity-history-entry p{margin:5px 0;overflow-wrap:anywhere}
 .course-activity-edit-form{margin-top:12px;padding:14px;border:1px solid var(--borde-suave);border-radius:12px;background:var(--bg-sutil)}
 .course-activity-edit-form .course-activity-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Estas secciones no usan el espaciado de la página de presentación. */
+.courses-main > .courses-summary,.courses-main > .courses-grid{padding:0}

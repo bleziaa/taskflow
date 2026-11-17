@@ -10,7 +10,9 @@
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
       if (response.status === 401) location.replace('/login.html');
-      throw new Error(body?.error?.message || 'No se pudo completar la solicitud.');
+      const error = new Error(body?.error?.message || 'No se pudo completar la solicitud.');
+      error.status = response.status; error.code = body?.error?.code; error.details = body?.error?.details || [];
+      throw error;
     }
     return body.data || {};
   }
@@ -22,6 +24,29 @@
     message.textContent = text;
     message.hidden = !text;
     message.className = 'institution-message is-' + type;
+  }
+  function clearFieldErrors(form) {
+    form.querySelectorAll('.institution-field-error').forEach(item => item.remove());
+    form.querySelectorAll('[aria-invalid="true"]').forEach(item => { item.removeAttribute('aria-invalid'); if (item.dataset.previousDescribedby !== undefined) { if (item.dataset.previousDescribedby) item.setAttribute('aria-describedby', item.dataset.previousDescribedby); else item.removeAttribute('aria-describedby'); delete item.dataset.previousDescribedby; } });
+  }
+  function showFieldError(form, field, messageText) {
+    if (!field || !messageText) return;
+    field.setAttribute('aria-invalid', 'true');
+    const hint = node('small', messageText, 'institution-field-error');
+    hint.id = 'field-error-' + field.name;
+    field.dataset.previousDescribedby = field.getAttribute('aria-describedby') || '';
+    field.setAttribute('aria-describedby', [field.dataset.previousDescribedby, hint.id].filter(Boolean).join(' '));
+    field.insertAdjacentElement('afterend', hint);
+  }
+  function showFormError(form, feedback, error) {
+    clearFieldErrors(form);
+    const rawDetails = Array.isArray(error.details) ? error.details : [];
+    const details = rawDetails.map(item => typeof item === 'string' ? { campo: item, mensaje: 'Este valor ya está registrado. Usa uno diferente.' } : item).filter(item => item && item.campo && item.mensaje);
+    details.forEach(item => showFieldError(form, form.elements.namedItem(item.campo), item.mensaje));
+    const hasFieldErrors = details.length > 0;
+    feedback.textContent = hasFieldErrors ? 'Revisa los campos señalados y vuelve a guardar.' : error.message;
+    feedback.hidden = false;
+    if (hasFieldErrors) form.elements.namedItem(details[0].campo)?.focus();
   }
   function node(tag, text, className) {
     const el = document.createElement(tag);
@@ -205,45 +230,75 @@
     renderStudents(); renderCompanies(); renderCourses();
   }
   function openForm(form,title,text) {
-    form.reset(); form.elements.id.value=''; $(title).textContent=text;
+    form.reset(); form.elements.id.value=''; clearFieldErrors(form); const feedback=form.querySelector('[data-form-feedback]'); if(feedback){feedback.hidden=true;feedback.textContent='';} $(title).textContent=text;
     form.hidden=false; form.scrollIntoView({behavior:'smooth',block:'center'});
   }
-  function closeForm(form) { form.reset(); form.elements.id.value=''; form.hidden=true; }
+  function closeForm(form) { form.reset(); form.elements.id.value=''; form.hidden=true; clearFieldErrors(form); const feedback=form.querySelector('[data-form-feedback]'); if(feedback){feedback.hidden=true;feedback.textContent='';} }
 
   $('#new-student').addEventListener('click',()=>{
+    $('#delete-student-form').hidden=true;
     openForm($('#student-form'),'#student-form-title','Registrar estudiante');
     $('#student-form').elements.programa.value='Ingeniería de Software';
     $('#student-form').elements.semestre.value='1';
+    $('#student-form-feedback').hidden=true;
     fillSelect($('#student-company'),state.companies.filter(c=>c.estado!=='inactiva'),c=>c.razonSocial);
     fillSelect($('#student-tutor'),state.tutors,t=>t.nombre+' · '+t.email);
   });
   $('#new-company').addEventListener('click',()=>openForm($('#company-form'),'#company-form-title','Registrar empresa'));
   $('#cancel-student').addEventListener('click',()=>closeForm($('#student-form')));
+  $('#delete-student-form').addEventListener('click',async()=>{
+    const form=$('#student-form'); const id=form.elements.id.value;
+    if(!id)return;
+    if(!confirm('¿Eliminar este estudiante? Si tiene historial de prácticas, TaskFlow impedirá borrarlo para conservar la trazabilidad.'))return;
+    const button=$('#delete-student-form'); button.disabled=true;
+    try{
+      await mutate('/api/organization/students/'+encodeURIComponent(id),'DELETE');
+      closeForm(form); $('#delete-student-form').hidden=true;
+      await loadAll(); notify('Estudiante eliminado correctamente.','success');
+    }catch(error){notify(error.message,'error');}
+    finally{button.disabled=false;}
+  });
   $('#cancel-company').addEventListener('click',()=>closeForm($('#company-form')));
   $('#search-students').addEventListener('input',renderStudents);
   $('#search-companies').addEventListener('input',renderCompanies);
 
+  const fieldRules = window.TaskFlowFieldRules;
+  function bindPhoneValidation(input) { if (!input || !fieldRules) return; const validatePhone=()=>input.setCustomValidity(fieldRules.isValidPhone(input.value)?'':'El teléfono debe contener entre 7 y 15 dígitos.'); input.addEventListener('input',validatePhone); validatePhone(); }
+  bindPhoneValidation($('#student-form').elements.telefono);
+  bindPhoneValidation($('#company-form').elements.telefono);
+  if (fieldRules) { const f=$('#student-form').elements; f.codigo.pattern=fieldRules.studentCodePattern; f.codigo.maxLength=fieldRules.studentCodeMax; f.nombre.maxLength=fieldRules.studentNameMax; f.email.maxLength=fieldRules.studentEmailMax; f.telefono.maxLength=fieldRules.studentPhoneMax; f.programa.minLength=fieldRules.studentProgramMin; f.programa.maxLength=fieldRules.studentProgramMax; }
   $('#student-form').addEventListener('submit',async event=>{
     event.preventDefault(); const form=event.currentTarget; const id=form.elements.id.value;
+    const feedback=$('#student-form-feedback'); feedback.hidden=true; feedback.textContent=''; clearFieldErrors(form);
+    const invalid=[...form.elements].find(field=>field.willValidate && !field.checkValidity());
+    if(invalid){showFieldError(form,invalid,invalid.validationMessage || 'Revisa este campo.');feedback.textContent='Hay campos que necesitan corrección.';feedback.hidden=false;invalid.focus();invalid.reportValidity();return;}
     const data=Object.fromEntries(new FormData(form).entries()); delete data.id;
     data.semestre=Number(data.semestre); data.empresa=data.empresa||null; data.tutor=data.tutor||null;
-    const button=form.querySelector('[type=submit]'); button.disabled=true;
+    const button=form.querySelector('[type=submit]'); const originalLabel=button.textContent; button.disabled=true; button.textContent='Guardando…';
     try {
       await mutate(id?'/api/organization/students/'+encodeURIComponent(id):'/api/organization/students',id?'PATCH':'POST',data);
       closeForm(form); await loadAll(); notify(id?'Ficha del estudiante actualizada.':'Estudiante registrado correctamente.','success');
-    } catch(error) { notify(error.message,'error'); }
-    finally { button.disabled=false; }
+    } catch(error) { showFormError(form,feedback,error); notify(error.message,'error'); }
+    finally { button.disabled=false; button.textContent=originalLabel; }
   });
+  if (fieldRules) { const f=$('#company-form').elements; f.razonSocial.minLength=fieldRules.companyNameMin; f.razonSocial.maxLength=fieldRules.companyNameMax; f.nit.maxLength=fieldRules.companyNitMax; f.sector.maxLength=fieldRules.companySectorMax; f.direccion.maxLength=fieldRules.companyAddressMax; f.ciudad.minLength=fieldRules.companyCityMin; f.ciudad.maxLength=fieldRules.companyCityMax; f.contactoNombre.maxLength=fieldRules.companyContactNameMax; f.contactoEmail.maxLength=fieldRules.companyContactEmailMax; f.telefono.maxLength=fieldRules.companyPhoneMax; }
   $('#company-form').addEventListener('submit',async event=>{
     event.preventDefault(); const form=event.currentTarget; const id=form.elements.id.value;
+    clearFieldErrors(form);
+    const invalid=[...form.elements].find(field=>field.willValidate && !field.checkValidity());
+    if (invalid) { const feedback=$('#company-form-feedback'); showFieldError(form,invalid,invalid.validationMessage || 'Revisa este campo.'); feedback.textContent='Hay campos que necesitan corrección.'; feedback.hidden=false; invalid.focus(); invalid.reportValidity(); return; }
     const data=Object.fromEntries(new FormData(form).entries()); delete data.id;
-    const button=form.querySelector('[type=submit]'); button.disabled=true;
+    const feedback=$('#company-form-feedback'); feedback.hidden=true; feedback.textContent='';
+    const button=form.querySelector('[type=submit]'); const originalLabel=button.textContent; button.disabled=true; button.textContent='Guardando…';
     try {
       await mutate(id?'/api/organization/companies/'+encodeURIComponent(id):'/api/organization/companies',id?'PATCH':'POST',data);
       closeForm(form); await loadAll(); notify(id?'Empresa actualizada.':'Empresa registrada correctamente.','success');
-    } catch(error) { notify(error.message,'error'); }
-    finally { button.disabled=false; }
+    } catch(error) { showFormError(form,feedback,error); notify(error.message,'error'); }
+    finally { button.disabled=false; button.textContent=originalLabel; }
   });
+  [$('#student-form'),$('#company-form')].forEach(form=>form.addEventListener('input',event=>{
+    if(event.target.matches('input,select,textarea')) { const field=event.target; field.removeAttribute('aria-invalid'); if(field.dataset.previousDescribedby !== undefined){if(field.dataset.previousDescribedby)field.setAttribute('aria-describedby',field.dataset.previousDescribedby);else field.removeAttribute('aria-describedby');delete field.dataset.previousDescribedby;} const error=form.querySelector('#field-error-'+field.name); if(error)error.remove(); }
+  }));
   $('#new-course').addEventListener('click',()=>{ $('#course-form').reset(); $('#course-form').hidden=false; $('#course-form').scrollIntoView({behavior:'smooth',block:'center'}); });
   $('#cancel-course').addEventListener('click',()=>{ $('#course-form').reset(); $('#course-form').hidden=true; });
   $('#course-form').addEventListener('submit',async event=>{
@@ -268,7 +323,9 @@
         openCourseEditor(id);
       } else if(button.dataset.action==='edit-student'){
         const student=state.students.find(item=>item._id===id); if(!student)return;
-        const form=$('#student-form'); openForm(form,'#student-form-title','Editar estudiante');
+        const form=$('#student-form'); openForm(form,'#student-form-title','Editar ficha del estudiante');
+        $('#delete-student-form').hidden=false;
+        $('#student-form-feedback').hidden=true; clearFieldErrors(form);
         Object.entries({...student,empresa:student.empresa?._id||'',tutor:student.tutor?._id||''}).forEach(([key,value])=>{
           const field=form.elements.namedItem(key); if(field)field.value=value??'';
         });
@@ -276,7 +333,7 @@
         fillSelect($('#student-tutor'),state.tutors,t=>t.nombre+' · '+t.email,student.tutor?._id||'');
       } else if(button.dataset.action==='edit-company'){
         const company=state.companies.find(item=>item._id===id); if(!company)return;
-        const form=$('#company-form'); openForm(form,'#company-form-title','Editar empresa');
+        const form=$('#company-form'); openForm(form,'#company-form-title','Editar empresa'); clearFieldErrors(form); $('#company-form-feedback').hidden=true;
         Object.entries(company).forEach(([key,value])=>{const field=form.elements.namedItem(key);if(field)field.value=value??'';});
       } else if(button.dataset.action==='delete-student'){
         if(!confirm('¿Eliminar el registro? Si tiene historial de prácticas, TaskFlow impedirá borrarlo para conservar la trazabilidad.'))return;

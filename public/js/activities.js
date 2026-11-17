@@ -75,14 +75,29 @@ function render() {
    const evidence = el('button', 'Ver evidencias'); evidence.type = 'button'; evidence.className = 'btn btn-secundario btn-sm'; evidence.dataset.action = 'evidences'; evidence.dataset.id = a._id;
    actions.append(edit, del, evidence); card.append(actions);
   } else {
-   const form = el('form', ''); form.className = 'evidence-upload'; form.dataset.activity = a._id;
-   const label = el('label', 'Adjuntar evidencia (PDF, DOCX o ZIP · máximo 10 MB)'); label.htmlFor = 'file-' + a._id;
-   const input = el('input', ''); input.type = 'file'; input.id = 'file-' + a._id; input.name = 'archivo'; input.accept = '.pdf,.docx,.zip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip'; input.required = true;
-   const submit = el('button', 'Enviar evidencia'); submit.type = 'submit'; submit.className = 'btn btn-primario btn-sm';
-   form.append(label, input, submit);
+   const latest = a.myEvidence || null;
+   if (a.deliveryLoadError) {
+    const warning = el('p', 'No pudimos consultar el estado de tu entrega. Actualiza la actividad antes de enviar un archivo.'); warning.className = 'form-mensaje error'; card.append(warning);
+    const retry = el('button', 'Actualizar estado de entrega'); retry.type = 'button'; retry.className = 'btn btn-secundario btn-sm'; retry.dataset.action = 'refresh-delivery'; retry.dataset.id = a._id; card.append(retry);
+   } else if (latest && latest.estado !== 'requiere_cambios') {
+    const statusBox = el('section', ''); statusBox.className = 'evidence-item student-delivery-status';
+    const statusText = latest.estado === 'aprobada' ? 'Actividad aprobada' : 'Ya enviada · En espera de revisión';
+    const statusHead = el('div', ''); statusHead.className = 'activity-card-head'; statusHead.append(el('strong', statusText), el('span', evidenceLabels[latest.estado] || 'Entregada'));
+    statusBox.append(statusHead, el('p', 'Archivo entregado: ' + latest.nombreOriginal));
+    if (latest.createdAt) statusBox.append(el('small', 'Enviada el ' + new Date(latest.createdAt).toLocaleString('es-CO')));
+    const download = el('a', 'Descargar mi entrega'); download.href = '/api/organization/evidences/' + encodeURIComponent(latest._id) + '/download'; download.className = 'evidence-download'; statusBox.append(download); card.append(statusBox);
+   } else {
+    if (latest?.estado === 'requiere_cambios') {
+     const correction = el('section', ''); correction.className = 'evidence-item'; correction.append(el('strong', 'El docente solicitó correcciones'));
+     if (latest.observacionTutor) correction.append(el('p', 'Observaciones: ' + latest.observacionTutor)); card.append(correction);
+    }
+    const form = el('form', ''); form.className = 'evidence-upload'; form.dataset.activity = a._id;
+    const label = el('label', latest ? 'Adjuntar archivo corregido (PDF, DOCX o ZIP · máximo 10 MB)' : 'Adjuntar evidencia (PDF, DOCX o ZIP · máximo 10 MB)'); label.htmlFor = 'file-' + a._id;
+    const input = el('input', ''); input.type = 'file'; input.id = 'file-' + a._id; input.name = 'archivo'; input.accept = '.pdf,.docx,.zip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip'; input.required = true;
+    const submit = el('button', latest ? 'Enviar corrección' : 'Enviar actividad'); submit.type = 'submit'; submit.className = 'btn btn-primario btn-sm'; form.append(label, input, submit); card.append(form);
+   }
    const evidence = el('button', 'Ver mis entregas'); evidence.type = 'button'; evidence.className = 'btn btn-secundario btn-sm'; evidence.dataset.action = 'evidences'; evidence.dataset.id = a._id;
-   const actions = el('div', ''); actions.className = 'activity-actions'; actions.append(evidence);
-   card.append(form, actions);
+   const actions = el('div', ''); actions.className = 'activity-actions'; actions.append(evidence); card.append(actions);
   }
   if (state.role === 'estudiante') {
    const form = el('form', ''); form.className = 'activity-assessment-form'; form.dataset.activityAssessment = a._id; form.dataset.assessmentType = 'self';
@@ -91,6 +106,46 @@ function render() {
    const reflectionLabel = el('label', 'Reflexión'); const reflection = el('textarea'); reflection.name = 'reflexion'; reflection.rows = 2; reflection.maxLength = 2000; reflection.placeholder = '¿Qué aprendiste y qué podrías mejorar?'; reflection.value = a.autoevaluacion?.reflexion || '';
    const submit = el('button', a.autoevaluacion?.evaluadoEn ? 'Actualizar autoevaluación' : 'Enviar autoevaluación'); submit.type = 'submit'; submit.className = 'btn btn-secundario btn-sm';
    form.append(scoreLabel, score, reflectionLabel, reflection, submit); card.append(form);
+  }
+  const reviews = Array.isArray(a.solicitudesRevisionNota) ? a.solicitudesRevisionNota : [];
+  if (reviews.length) {
+   const reviewBox = el('section', ''); reviewBox.className = 'grade-review-list';
+   reviewBox.append(el('h3', 'Solicitudes de revisión de nota'));
+   reviews.slice().reverse().forEach((review) => {
+    const item = el('article', ''); item.className = 'grade-review-item';
+    item.append(el('strong', (review.solicitadaPor?.nombre || 'Estudiante') + ' · ' + (review.estado || 'pendiente')),
+      el('p', 'Nota al solicitar: ' + Number(review.calificacionOriginal).toFixed(1) + ' / 5'),
+      el('p', 'Motivo: ' + review.motivo));
+    if (review.respuestaTutor) item.append(el('p', 'Respuesta del tutor: ' + review.respuestaTutor));
+    if (review.calificacionNueva !== null && review.calificacionNueva !== undefined) item.append(el('p', 'Nota revisada: ' + Number(review.calificacionNueva).toFixed(1) + ' / 5'));
+    if (review.respondidaEn) item.append(el('small', 'Respondida: ' + new Date(review.respondidaEn).toLocaleString('es-CO')));
+    if (state.role !== 'estudiante' && review.estado === 'pendiente') {
+     const responseForm = el('form', ''); responseForm.className = 'grade-review-response'; responseForm.dataset.activity = a._id; responseForm.dataset.review = review._id;
+     const decision = el('select', ''); decision.name = 'estado'; decision.add(new Option('Aceptar revisión', 'aceptada')); decision.add(new Option('Rechazar revisión', 'rechazada'));
+     const newGradeLabel = el('label', 'Nueva nota (opcional, de 0 a 5)');
+     const newGrade = el('input'); newGrade.type = 'number'; newGrade.name = 'calificacionNueva'; newGrade.min = '0'; newGrade.max = '5'; newGrade.step = '0.1'; newGrade.placeholder = 'Dejar vacío para conservar la nota';
+     const responseLabel = el('label', 'Respuesta al estudiante');
+     const responseText = el('textarea'); responseText.name = 'respuestaTutor'; responseText.required = true; responseText.minLength = 5; responseText.maxLength = 2000; responseText.rows = 2; responseText.placeholder = 'Explica la decisión y, si corresponde, el ajuste realizado…';
+     const send = el('button', 'Responder solicitud'); send.type = 'submit'; send.className = 'btn btn-primario btn-sm';
+     responseForm.append(decision, newGradeLabel, newGrade, responseLabel, responseText, send); item.append(responseForm);
+    }
+    reviewBox.append(item);
+   });
+   card.append(reviewBox);
+  }
+  if (state.role === 'estudiante' && a.evaluacionTutor?.calificacion !== null && a.evaluacionTutor?.calificacion !== undefined) {
+   const pendingReview = reviews.some((review) => review.estado === 'pendiente');
+   const reviewForm = el('form', ''); reviewForm.className = 'grade-review-request'; reviewForm.dataset.activity = a._id;
+   reviewForm.append(el('h3', 'Solicitar revisión de mi nota'));
+   reviewForm.append(el('p', 'Calificación oficial: ' + Number(a.evaluacionTutor.calificacion).toFixed(1) + ' / 5'));
+   if (pendingReview) reviewForm.append(el('p', 'Tu solicitud está pendiente de respuesta. No puedes enviar otra hasta que sea resuelta.'));
+   else {
+    const reasonLabel = el('label', '¿Por qué solicitas la revisión?');
+    const reason = el('textarea'); reason.name = 'motivo'; reason.required = true; reason.minLength = 10; reason.maxLength = 2000; reason.rows = 3; reason.placeholder = 'Describe qué aspecto de la calificación consideras que debe revisarse…';
+    const submit = el('button', 'Enviar solicitud de revisión'); submit.type = 'submit'; submit.className = 'btn btn-secundario btn-sm';
+    reviewForm.append(reasonLabel, reason, submit);
+   }
+   card.append(reviewForm);
   }
   if (state.role === 'tutor' || state.role === 'administrador') {
    const form = el('form', ''); form.className = 'activity-assessment-form'; form.dataset.activityAssessment = a._id; form.dataset.assessmentType = 'tutor';
@@ -104,7 +159,14 @@ function render() {
   return card;
  }));
 }
-async function load() { const data = await api('/api/organization/activities'); state.activities = data.actividades || []; render(); }
+async function load() {
+ const data = await api('/api/organization/activities'); state.activities = data.actividades || [];
+ if (state.role === 'estudiante') await Promise.all(state.activities.map(async (activity) => {
+  try { const result = await api('/api/organization/evidences/activity/' + encodeURIComponent(activity._id)); const evidences = Array.isArray(result.evidencias) ? result.evidencias : []; activity.myEvidence = evidences[0] || null; activity.deliveryLoadError = false; }
+  catch (error) { activity.myEvidence = null; activity.deliveryLoadError = true; }
+ }));
+ render();
+}
 function reset() { $('#form-activity').reset(); $('#change-reason-field').hidden = true; $('#form-activity').elements.id.value = ''; $('#a-practica').disabled = false; $('#a-modulo').disabled = false; $('#a-modulo').replaceChildren(new Option('Primero selecciona una práctica…', '')); $('#a-modulo').disabled = true; $('#activity-form-wrap').hidden = true; }
 async function showEvidences(activityId) {
  const area = $('#evidence-' + activityId); area.replaceChildren(el('p', 'Cargando entregas…'));
@@ -182,6 +244,23 @@ document.addEventListener('submit', async (event) => {
   } catch (error) { notify(error.message, true, '#evidence-message'); }
   return;
  }
+ const gradeReviewRequest = event.target.closest('.grade-review-request');
+ if (gradeReviewRequest) {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(gradeReviewRequest).entries());
+  try { await mutate('/api/organization/activities/' + encodeURIComponent(gradeReviewRequest.dataset.activity) + '/grade-reviews', 'POST', data); await load(); notify('Solicitud de revisión enviada al tutor.', false, '#evidence-message'); }
+  catch (error) { notify(error.message, true, '#evidence-message'); }
+  return;
+ }
+ const gradeReviewResponse = event.target.closest('.grade-review-response');
+ if (gradeReviewResponse) {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(gradeReviewResponse).entries());
+  if (!data.calificacionNueva) delete data.calificacionNueva;
+  try { await mutate('/api/organization/activities/' + encodeURIComponent(gradeReviewResponse.dataset.activity) + '/grade-reviews/' + encodeURIComponent(gradeReviewResponse.dataset.review), 'PATCH', data); await load(); notify('Respuesta de revisión guardada.', false, '#evidence-message'); }
+  catch (error) { notify(error.message, true, '#evidence-message'); }
+  return;
+ }
  const reviewForm = event.target.closest('.evidence-review');
  if (reviewForm) {
   event.preventDefault(); const data = Object.fromEntries(new FormData(reviewForm).entries());
@@ -193,6 +272,7 @@ document.addEventListener('click', async (event) => {
  const button = event.target.closest('button[data-action]'); if (!button) return; const activity = state.activities.find((a) => a._id === button.dataset.id); if (!activity) return;
  try {
   if (button.dataset.action === 'evidences') { await showEvidences(activity._id); return; }
+  if (button.dataset.action === 'refresh-delivery') { await load(); notify('Estado de entrega actualizado.', false, '#evidence-message'); return; }
   if (button.dataset.action === 'edit') {
    const form = $('#form-activity'); const values = { id: activity._id, titulo: activity.titulo, fechaInicio: activity.fechaInicio ? String(activity.fechaInicio).slice(0, 10) : '', fechaLimite: String(activity.fechaLimite).slice(0, 10), prioridad: activity.prioridad, descripcion: activity.descripcion };
    Object.entries(values).forEach(([key, value]) => { if (form.elements.namedItem(key)) form.elements.namedItem(key).value = value || ''; });

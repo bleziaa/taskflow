@@ -4,7 +4,7 @@ const { requireAuth } = require('../middleware/requireAuth');
 const requireRole = require('../middleware/requireRole');
 const { protegerCsrf } = require('../middleware/csrf');
 const validate = require('../middleware/validate');
-const { validarId, validarEstudiante, validarEmpresa } = require('../validators/admin.validators');
+const { validarId, validarEstudiante, validarEstudianteParcial, validarEmpresa, validarEmpresaParcial } = require('../validators/admin.validators');
 const { validarNuevoUsuario, validarActualizacionUsuario } = require('../validators/user.validators');
 const estudiantes = require('../controllers/student.controller');
 const empresas = require('../controllers/company.controller');
@@ -77,13 +77,13 @@ router.get('/dashboard', async (req, res, next) => {
 router.get('/students', estudiantes.listarEstudiantes);
 router.get('/students/:id', validarId, validate, estudiantes.obtenerEstudiante);
 router.post('/students', protegerCsrf, validarEstudiante, validate, estudiantes.crearEstudiante);
-router.patch('/students/:id', protegerCsrf, validarId, validate, estudiantes.actualizarEstudiante);
+router.patch('/students/:id', protegerCsrf, validarId, validarEstudianteParcial, validate, estudiantes.actualizarEstudiante);
 router.delete('/students/:id', protegerCsrf, validarId, validate, estudiantes.eliminarEstudiante);
 
 router.get('/companies', empresas.listarEmpresas);
 router.get('/companies/:id', validarId, validate, empresas.obtenerEmpresa);
 router.post('/companies', protegerCsrf, validarEmpresa, validate, empresas.crearEmpresa);
-router.patch('/companies/:id', protegerCsrf, validarId, validate, empresas.actualizarEmpresa);
+router.patch('/companies/:id', protegerCsrf, validarId, validarEmpresaParcial, validate, empresas.actualizarEmpresa);
 router.delete('/companies/:id', protegerCsrf, validarId, validate, empresas.eliminarEmpresa);
 
 router.get('/users', usuarios.listarUsuarios);

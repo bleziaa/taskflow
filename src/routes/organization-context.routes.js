@@ -5,8 +5,10 @@ const rateLimit = require('express-rate-limit');
 const validate = require('../middleware/validate');
 const controller = require('../controllers/organization-context.controller');
 const requireOrganization = require('../middleware/requireOrganization');
-const { validarId, validarEstudiante, validarEmpresa } = require('../validators/admin.validators');
+const { validarId, validarEstudiante, validarEstudianteParcial, validarEmpresa, validarEmpresaParcial } = require('../validators/admin.validators');
+const FIELD_RULES = require('../../shared/field-rules');
 const estudiantes = require('../controllers/student.controller');
+const perfilEstudiante = require('../controllers/student-profile.controller');
 const empresas = require('../controllers/company.controller');
 const practicas = require('../controllers/practice.controller');
 const actividades = require('../controllers/activity.controller');
@@ -34,17 +36,24 @@ router.delete('/active', protegerCsrf, controller.limpiarOrganizacionActiva);
 
 // CRUD institucional: separado del administrador general y siempre ligado
 // a la organización activa validada contra la membresía de la sesión.
-router.get('/students', requireOrganization('administrador'), estudiantes.listarEstudiantes);
-router.get('/tutors', requireOrganization('administrador'), controller.listarTutoresDeOrganizacion);
+router.get('/profile', requireOrganization('estudiante'), perfilEstudiante.obtenerMiFicha);
+router.patch('/profile', requireOrganization('estudiante'), protegerCsrf,
+  body('nombre').isString().trim().isLength({ min: FIELD_RULES.studentNameMin, max: FIELD_RULES.profileNameMax }).withMessage('El nombre debe tener entre 2 y 120 caracteres.'),
+  body('telefono').optional({ values: 'falsy' }).isString().trim().isLength({ max: FIELD_RULES.studentPhoneMax }).bail().custom(FIELD_RULES.isValidPhone).withMessage('El teléfono debe contener entre 7 y 15 dígitos y usar solo números, +, espacios, paréntesis o guiones.'),
+  body('programa').isString().trim().isLength({ min: FIELD_RULES.studentProgramMin, max: FIELD_RULES.studentProgramMax }).withMessage('El programa debe tener entre 2 y 120 caracteres.'),
+  body('semestre').isInt({ min: FIELD_RULES.semesterMin, max: FIELD_RULES.semesterMax }).toInt(), validate, perfilEstudiante.actualizarMiFicha);
+
+router.get('/students', requireOrganization('administrador', 'tutor'), estudiantes.listarEstudiantes);
+router.get('/tutors', requireOrganization('administrador', 'tutor'), controller.listarTutoresDeOrganizacion);
 router.get('/students/:id', requireOrganization('administrador'), validarId, validate, estudiantes.obtenerEstudiante);
 router.post('/students', requireOrganization('administrador'), protegerCsrf, validarEstudiante, validate, estudiantes.crearEstudiante);
-router.patch('/students/:id', requireOrganization('administrador'), protegerCsrf, validarId, validate, estudiantes.actualizarEstudiante);
+router.patch('/students/:id', requireOrganization('administrador'), protegerCsrf, validarId, validarEstudianteParcial, validate, estudiantes.actualizarEstudiante);
 router.delete('/students/:id', requireOrganization('administrador'), protegerCsrf, validarId, validate, estudiantes.eliminarEstudiante);
 
-router.get('/companies', requireOrganization('administrador'), empresas.listarEmpresas);
+router.get('/companies', requireOrganization('administrador', 'tutor'), empresas.listarEmpresas);
 router.get('/companies/:id', requireOrganization('administrador'), validarId, validate, empresas.obtenerEmpresa);
 router.post('/companies', requireOrganization('administrador'), protegerCsrf, validarEmpresa, validate, empresas.crearEmpresa);
-router.patch('/companies/:id', requireOrganization('administrador'), protegerCsrf, validarId, validate, empresas.actualizarEmpresa);
+router.patch('/companies/:id', requireOrganization('administrador'), protegerCsrf, validarId, validarEmpresaParcial, validate, empresas.actualizarEmpresa);
 router.delete('/companies/:id', requireOrganization('administrador'), protegerCsrf, validarId, validate, empresas.eliminarEmpresa);
 
 // Operaciones académicas: el rol efectivo proviene de la membresía institucional.
@@ -120,6 +129,11 @@ router.get('/courses/:courseId/activities/:activityId/evidences', rolesCursos,
   param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
   param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
   validate, entregasCurso.listar);
+router.delete('/courses/:courseId/activities/:activityId/evidences/:evidenceId', requireOrganization('estudiante'), protegerCsrf,
+  param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  param('evidenceId').isHexadecimal().isLength({ min: 24, max: 24 }),
+  validate, entregasCurso.retirar);
 router.get('/courses/:courseId/activities/:activityId/evidences/:evidenceId/download', rolesCursos,
   param('courseId').isHexadecimal().isLength({ min: 24, max: 24 }),
   param('activityId').isHexadecimal().isLength({ min: 24, max: 24 }),
@@ -161,7 +175,7 @@ router.put('/practices/:id/academic-structure', requireOrganization('administrad
   validate, estructuraAcademica.guardarEstructura);
 router.get('/practices', rolesAcademicos, practicas.listarPracticas);
 router.get('/practices/:id', rolesAcademicos, practiceValidators.validarIdPractica, validate, practicas.obtenerPractica);
-router.post('/practices', requireOrganization('administrador'), protegerCsrf, practiceValidators.validarNuevaPractica, validate, practicas.crearPractica);
+router.post('/practices', requireOrganization('administrador', 'tutor'), protegerCsrf, practiceValidators.validarNuevaPractica, validate, practicas.crearPractica);
 router.patch('/practices/:id', requireOrganization('administrador'), protegerCsrf, practiceValidators.validarIdPractica, practiceValidators.validarActualizacionPractica, validate, practicas.actualizarPractica);
 router.delete('/practices/:id', requireOrganization('administrador'), protegerCsrf, practiceValidators.validarIdPractica, validate, practicas.eliminarPractica);
 
@@ -175,6 +189,14 @@ router.put('/activities/:id/tutor-assessment', requireOrganization('administrado
   body('observaciones').optional().isString().isLength({ max: 2000 }),
   body('fortalezas').optional().isString().isLength({ max: 2000 }),
   body('aspectosMejora').optional().isString().isLength({ max: 2000 }), validate, actividades.guardarEvaluacionTutor);
+router.post('/activities/:id/grade-reviews', requireOrganization('estudiante'), protegerCsrf, activityValidators.validarId,
+  body('motivo').isString().trim().isLength({ min: 10, max: 2000 }), validate, actividades.solicitarRevisionNota);
+router.patch('/activities/:id/grade-reviews/:solicitudId', requireOrganization('administrador', 'tutor'), protegerCsrf,
+  activityValidators.validarId, param('solicitudId').isMongoId(),
+  body('estado').isIn(['aceptada', 'rechazada']),
+  body('respuestaTutor').isString().trim().isLength({ min: 5, max: 2000 }),
+  body('calificacionNueva').optional({ nullable: true }).isFloat({ min: 0, max: 5 }).toFloat(),
+  validate, actividades.responderRevisionNota);
 router.delete('/activities/:id', requireOrganization('administrador', 'tutor'), protegerCsrf, activityValidators.validarId, validate, actividades.eliminarActividad);
 router.post('/activities/:id/resource', requireOrganization('administrador', 'tutor'), protegerCsrf, activityValidators.validarId, validate, subirRecursoActividad, actividades.subirRecurso);
 router.get('/activities/:id/resource/download', rolesAcademicos, activityValidators.validarId, validate, actividades.descargarRecurso);

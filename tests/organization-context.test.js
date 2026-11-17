@@ -162,14 +162,16 @@ test('el CRUD institucional solo lista estudiantes y empresas de la organizació
   assert.equal((await agent.get(`/api/organization/students/${secondStudent._id}`)).status, 404);
 });
 
-test('el CRUD institucional rechaza usuarios sin membresía de administrador en la organización activa', async () => {
+test('el tutor puede consultar estudiantes pero no crearlos en la organización activa', async () => {
   await Membership.create({ usuario: user._id, organizacion: org._id, role: 'tutor', asignadoPor: user._id });
   const agent = request.agent(server);
   await login(agent);
   assert.equal((await mutate(agent, 'put', '/api/auth/organizations/active', { organizationId: String(org._id) })).status, 200);
   const response = await agent.get('/api/organization/students');
-  assert.equal(response.status, 403);
-  assert.equal(response.body.error.code, 'ORGANIZATION_ROLE_FORBIDDEN');
+  assert.equal(response.status, 200);
+  const forbidden = await mutate(agent, 'post', '/api/organization/students', {});
+  assert.equal(forbidden.status, 403);
+  assert.equal(forbidden.body.error.code, 'ORGANIZATION_ROLE_FORBIDDEN');
 });
 
 test('el CRUD de actividades usa el espacio institucional activo y persiste en MongoDB', async () => {
@@ -290,13 +292,29 @@ test('las evidencias se suben, revisan y descargan solo dentro de su organizaci�
     .attach('archivo', Buffer.from('%PDF-1.7\ncontenido de prueba'), { filename: 'informe.pdf', contentType: 'application/pdf' });
   assert.equal(upload.status, 201, JSON.stringify(upload.body));
   const evidenceId = upload.body.data.evidencia._id;
+  const duplicateUpload = await studentAgent.post(`/api/organization/activities/${activity._id}/evidences`)
+    .set('X-CSRF-Token', await csrf(studentAgent))
+    .attach('archivo', Buffer.from('%PDF-1.7\\nsegundo intento'), { filename: 'segundo-intento.pdf', contentType: 'application/pdf' });
+  assert.equal(duplicateUpload.status, 409, JSON.stringify(duplicateUpload.body));
+  assert.equal(duplicateUpload.body.error.code, 'EVIDENCE_ALREADY_SUBMITTED');
+  const ownDeliveries = await studentAgent.get(`/api/organization/evidences/activity/${activity._id}`);
+  assert.equal(ownDeliveries.status, 200);
+  assert.equal(ownDeliveries.body.data.evidencias.length, 1);
   const adminAgent = request.agent(server);
   await login(adminAgent);
   assert.equal((await mutate(adminAgent, 'put', '/api/auth/organizations/active', { organizationId: String(org._id) })).status, 200);
-  const review = await mutate(adminAgent, 'patch', `/api/organization/evidences/${evidenceId}/review`, { estado: 'aprobada', observacion: 'Correcto' });
+  const correctionRequest = await mutate(adminAgent, 'patch', `/api/organization/evidences/${evidenceId}/review`, { estado: 'requiere_cambios', observacion: 'Corrige la portada y vuelve a enviar.' });
+  assert.equal(correctionRequest.status, 200, JSON.stringify(correctionRequest.body));
+  assert.equal(correctionRequest.body.data.evidencia.estado, 'requiere_cambios');
+  const correctionUpload = await studentAgent.post(`/api/organization/activities/${activity._id}/evidences`)
+    .set('X-CSRF-Token', await csrf(studentAgent))
+    .attach('archivo', Buffer.from('%PDF-1.7\\narchivo corregido'), { filename: 'informe-corregido.pdf', contentType: 'application/pdf' });
+  assert.equal(correctionUpload.status, 201, JSON.stringify(correctionUpload.body));
+  const correctedEvidenceId = correctionUpload.body.data.evidencia._id;
+  const review = await mutate(adminAgent, 'patch', `/api/organization/evidences/${correctedEvidenceId}/review`, { estado: 'aprobada', observacion: 'Correcto' });
   assert.equal(review.status, 200, JSON.stringify(review.body));
   assert.equal(review.body.data.evidencia.estado, 'aprobada');
-  assert.equal((await adminAgent.get(`/api/organization/evidences/${evidenceId}/download`)).status, 200);
+  assert.equal((await adminAgent.get(`/api/organization/evidences/${correctedEvidenceId}/download`)).status, 200);
   assert.equal((await adminAgent.get(`/api/organization/evidences/${otherEvidence._id}/download`)).status, 404);
   await fs.unlink(path.join(STORAGE_DIR, otherFile));
 });
@@ -354,7 +372,7 @@ test('la matriz de roles institucionales aplica permisos distintos sin usar el r
   await login(agent);
   const expected = {
     administrador: { students: 200, activities: 400, evaluations: 400, evidence: 403 },
-    tutor: { students: 403, activities: 400, evaluations: 400, evidence: 403 },
+    tutor: { students: 200, activities: 400, evaluations: 400, evidence: 403 },
     estudiante: { students: 403, activities: 403, evaluations: 403, evidence: 400 },
   };
   for (const role of ['administrador', 'tutor', 'estudiante']) {
@@ -474,4 +492,36 @@ test('el tutor no puede consultar ni modificar la estructura de una práctica aj
     modulos: [{ nombre: 'Módulo único', ponderacion: 100 }],
   });
   assert.equal(write.status, 403);
+});
+test('el estudiante solicita revisión de nota y el tutor responde conservando la trazabilidad', async () => {
+  await Membership.create({ usuario: user._id, organizacion: org._id, role: 'tutor', asignadoPor: user._id });
+  const passwordHash = await bcrypt.hash('Password123', 4);
+  const studentUser = await User.create({ nombre: 'Estudiante Revisión', email: 'revision@student.test', passwordHash, role: 'estudiante' });
+  await Membership.create({ usuario: studentUser._id, organizacion: org._id, role: 'estudiante', asignadoPor: user._id });
+  const student = await Student.create({ organizationId: org._id, codigo: 'REV-001', nombre: studentUser.nombre, email: studentUser.email, programa: 'Software', semestre: 3, usuario: studentUser._id });
+  const company = await Company.create({ organizationId: org._id, razonSocial: 'Empresa Revisión', nit: 'NIT-REV', ciudad: 'Cartagena' });
+  const practice = await Practice.create({ organizationId: org._id, estudiante: student._id, empresa: company._id, tutor: user._id, titulo: 'Práctica revisión', fechaInicio: new Date('2026-01-01'), fechaFin: new Date('2026-12-01'), estado: 'en_curso' });
+  const activity = await Activity.create({ organizationId: org._id, practica: practice._id, titulo: 'Actividad calificada', fechaLimite: new Date('2026-11-20'), creadoPor: user._id, evaluacionTutor: { calificacion: 3.2, observaciones: 'Entrega revisada.', evaluadoPor: user._id, evaluadoEn: new Date() } });
+  const studentAgent = request.agent(server);
+  const studentCsrf = await csrf(studentAgent);
+  assert.equal((await studentAgent.post('/api/auth/login').set('X-CSRF-Token', studentCsrf).send({ email: studentUser.email, password: 'Password123' })).status, 200);
+  assert.equal((await mutate(studentAgent, 'put', '/api/auth/organizations/active', { organizationId: String(org._id) })).status, 200);
+  const requested = await mutate(studentAgent, 'post', '/api/organization/activities/' + activity._id + '/grade-reviews', { motivo: 'Considero que no se tuvo en cuenta el análisis adicional incluido en mi entrega.' });
+  assert.equal(requested.status, 201, JSON.stringify(requested.body));
+  const reviewId = requested.body.data.solicitudesRevisionNota[0]._id;
+  assert.equal(requested.body.data.solicitudesRevisionNota[0].estado, 'pendiente');
+  const duplicate = await mutate(studentAgent, 'post', '/api/organization/activities/' + activity._id + '/grade-reviews', { motivo: 'Quiero solicitar nuevamente la revisión de esta nota.' });
+  assert.equal(duplicate.status, 409);
+  assert.equal(duplicate.body.error.code, 'GRADE_REVIEW_PENDING');
+  const tutorAgent = request.agent(server);
+  await login(tutorAgent);
+  assert.equal((await mutate(tutorAgent, 'put', '/api/auth/organizations/active', { organizationId: String(org._id) })).status, 200);
+  const answered = await mutate(tutorAgent, 'patch', '/api/organization/activities/' + activity._id + '/grade-reviews/' + reviewId, { estado: 'aceptada', respuestaTutor: 'Se revisó el análisis adicional y se ajustó la valoración.', calificacionNueva: 4.1 });
+  assert.equal(answered.status, 200, JSON.stringify(answered.body));
+  const saved = await Activity.findById(activity._id);
+  assert.equal(saved.evaluacionTutor.calificacion, 4.1);
+  assert.equal(saved.solicitudesRevisionNota[0].estado, 'aceptada');
+  assert.equal(saved.solicitudesRevisionNota[0].calificacionOriginal, 3.2);
+  assert.equal(saved.solicitudesRevisionNota[0].calificacionNueva, 4.1);
+  assert.equal(String(saved.solicitudesRevisionNota[0].respondidaPor), String(user._id));
 });

@@ -55,3 +55,19 @@ test('una ruta inexistente responde 404 con formato de error uniforme', async ()
   assert.equal(res.body.error.code, 'NOT_FOUND');
   assert.match(res.body.error.message, /Ruta no encontrada/);
 });
+
+test('las reglas compartidas se sirven al formulario desde /shared/field-rules.js', async () => {
+  const res = await request(app).get('/shared/field-rules.js');
+
+  assert.equal(res.status, 200);
+  assert.match(res.headers['content-type'], /javascript|ecmascript/);
+  assert.match(res.text, /TaskFlowFieldRules/);
+  assert.match(res.text, /isValidPhone/);
+});
+
+test('el acceso local no fuerza la navegación a HTTPS', async () => {
+  const res = await request(app).get('/login.html');
+  assert.equal(res.status, 200);
+  assert.ok(res.headers['content-security-policy']);
+  assert.doesNotMatch(res.headers['content-security-policy'], /upgrade-insecure-requests/);
+});

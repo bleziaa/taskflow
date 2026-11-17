@@ -50,3 +50,67 @@
 .student-quick-links { grid-template-columns:repeat(4,minmax(0,1fr)); }
 @media(max-width:900px) { .student-quick-links { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:520px) { .student-quick-links { grid-template-columns:1fr; } }
+
+/* Ficha académica editable por el propio estudiante */
+.student-profile-card { margin:0 0 22px; scroll-margin-top:24px; }
+.profile-lock-label { padding:7px 11px; border-radius:999px; background:#f0eaff; color:#5b369f; font-size:.72rem; font-weight:700; white-space:nowrap; }
+.student-profile-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.student-profile-form label { display:grid; gap:7px; color:var(--texto,#241d30); font-size:.78rem; font-weight:650; }
+.student-profile-form label input,.student-profile-form label select { width:100%; min-height:44px; padding:10px 12px; border:1px solid #ded7e9; border-radius:11px; background:#fff; color:#241d30; font:inherit; font-weight:450; }
+.student-profile-form label input:focus,.student-profile-form label select:focus { outline:3px solid rgba(104,65,184,.16); border-color:#8463c3; }
+.student-profile-form label input:disabled { background:#f5f3f8; color:#777080; cursor:not-allowed; }
+.student-profile-form label small { color:var(--texto-tenue,#777080); font-size:.68rem; font-weight:400; }
+.profile-readonly-facts { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:12px; padding:14px 16px; border-radius:12px; background:#f8f5fd; }
+.profile-readonly-facts span { display:grid; gap:4px; color:#766b85; font-size:.7rem; }
+.profile-readonly-facts strong { color:#302541; font-size:.8rem; }
+.student-profile-feedback { grid-column:1/-1; margin:0; padding:11px 13px; border-radius:10px; background:#f3effa; color:#59447e; font-size:.8rem; }
+.student-profile-feedback.is-error { background:#fff1f1; color:#922d2d; }.student-profile-feedback.is-success { background:#effaf2; color:#24643a; }
+.student-profile-actions { grid-column:1/-1; display:flex; align-items:center; flex-wrap:wrap; gap:14px; }.student-profile-actions span { color:var(--texto-tenue,#777080); font-size:.7rem; }
+@media(max-width:600px) { .student-profile-form { grid-template-columns:1fr; }.student-profile-card .student-card-heading { align-items:flex-start; }.profile-readonly-facts { flex-direction:column; } }
+
+.student-profile-completed { display:flex; align-items:center; gap:14px; padding:16px; border:1px solid #d9eadf; border-radius:13px; background:#f3faf5; color:#254b32; }
+.student-profile-completed[hidden],.student-profile-form[hidden] { display:none !important; }
+.profile-completed-icon { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border-radius:50%; background:#dff1e4; color:#247342; font-size:1.1rem; font-weight:800; }
+.student-profile-completed strong { display:block; font-size:.86rem; }.student-profile-completed p { margin:4px 0 0; color:#587361; font-size:.74rem; line-height:1.45; }
+.student-profile-completed .btn { margin-left:auto; white-space:nowrap; }
+@media(max-width:600px) { .student-profile-completed { align-items:flex-start; flex-wrap:wrap; }.student-profile-completed .btn { margin-left:52px; } }
+
+/* Transiciones suaves para el espacio académico, sin distraer del contenido. */
+.student-kpi,
+.student-card,
+.student-quick-links a {
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+@media (hover: hover) {
+  .student-kpi:hover,
+  .student-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, #6841b8 24%, var(--borde-suave, #e8e2f0));
+    box-shadow: 0 12px 30px rgba(35, 22, 57, .08);
+  }
+}
+.student-dashboard > .student-welcome,
+.student-dashboard > .student-card,
+.student-dashboard > .student-kpis,
+.student-dashboard > .student-main-grid,
+.student-dashboard > .student-quick-links {
+  animation: taskflow-student-enter .48s cubic-bezier(.2,.75,.25,1) both;
+}
+.student-dashboard > .student-profile-card { animation-delay: .04s; }
+.student-dashboard > .student-kpis { animation-delay: .08s; }
+.student-dashboard > .student-main-grid { animation-delay: .12s; }
+.student-dashboard > .deadlines-card { animation-delay: .16s; }
+.student-dashboard > .student-quick-links { animation-delay: .2s; }
+@keyframes taskflow-student-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .student-kpi,
+  .student-card,
+  .student-quick-links a,
+  .student-dashboard > * { transition:none; animation:none; }
+  .student-kpi:hover,
+  .student-card:hover,
+  .student-quick-links a:hover { transform:none; }
+}

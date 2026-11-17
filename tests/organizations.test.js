@@ -90,6 +90,30 @@ test('el administrador crea organizaciones y obtiene métricas reales', async ()
   assert.equal(list.body.data.organizaciones[0].usuariosVinculados, 1);
 });
 
+test('rechaza crear otra cuenta con un correo ya registrado aunque cambien nombre y rol', async () => {
+  const agent = request.agent(server);
+  await login(agent, admin.email);
+  const organization = await mutate(agent, 'post', '/api/admin/organizations', {
+    nombre: 'Institución para duplicados', codigo: 'INST-DUPLICADOS'
+  });
+  const organizationId = organization.body.data.organizacion._id;
+  const before = await User.countDocuments();
+
+  const duplicate = await mutate(agent, 'post', '/api/admin/users', {
+    nombre: 'Nombre completamente diferente',
+    email: member.email.toUpperCase(),
+    role: 'estudiante',
+    organizationId,
+    membershipRole: 'estudiante',
+  });
+
+  assert.equal(duplicate.status, 409);
+  assert.equal(duplicate.body.error.code, 'EMAIL_IN_USE');
+  assert.match(duplicate.body.error.message, /Ya existe una cuenta con ese correo/i);
+  assert.equal(await User.countDocuments(), before);
+  assert.equal(await User.countDocuments({ email: member.email }), 1);
+});
+
 test('el selector de miembros ofrece docentes y estudiantes, no administradores generales', async () => {
   const agent = request.agent(server);
   await login(agent, admin.email);

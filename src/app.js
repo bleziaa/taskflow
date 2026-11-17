@@ -20,13 +20,14 @@ const { requireAuth, redirigirSiNoAutenticado } = require('./middleware/requireA
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 const RUTA_PUBLICA = path.join(__dirname, '..', 'public');
+const RUTA_COMPARTIDA = path.join(__dirname, '..', 'shared');
 const RUTA_BRANDING = path.join(__dirname, '..', 'storage', 'branding');
 function crearApp({ sessionStore } = {}) {
   const app = express();
   app.disable('x-powered-by');
   if (env.nodeEnv === 'production') app.set('trust proxy', 1);
   const cspDirectives = helmet.contentSecurityPolicy.getDefaultDirectives();
-  if (env.nodeEnv !== 'production') delete cspDirectives['upgrade-insecure-requests'];
+  if (env.nodeEnv !== 'production') cspDirectives['upgrade-insecure-requests'] = null;
   app.use(helmet({ contentSecurityPolicy: { directives: cspDirectives } }));
   if (env.nodeEnv !== 'test') app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
   app.use(express.json({ limit: '10kb' }));
@@ -35,6 +36,8 @@ function crearApp({ sessionStore } = {}) {
   const store = sessionStore || (mongoose.connection.readyState === 1 ? crearSessionStore() : new session.MemoryStore());
   app.use(crearSessionMiddleware(store));
   app.use('/media/branding', express.static(RUTA_BRANDING, { fallthrough: false, immutable: true, maxAge: '1y', dotfiles: 'deny', index: false }));
+  // Reglas compartidas entre frontend y backend; solo se publica este directorio dedicado.
+  app.use('/shared', express.static(RUTA_COMPARTIDA, { fallthrough: true, dotfiles: 'deny', index: false, maxAge: env.nodeEnv === 'production' ? '1h' : 0 }));
   app.use('/api/health', healthRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/organization', requireAuth, organizationContextRoutes);

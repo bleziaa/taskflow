@@ -29,7 +29,9 @@ function poblar(query, organizationId = null) {
   const match = organizationId ? { organizationId } : {};
   return query.populate({ path: 'practica', match, select: 'titulo fechaInicio fechaFin estado estructuraAcademica', populate: [
     { path: 'estudiante', match, select: 'nombre codigo email' }, { path: 'tutor', select: 'nombre email' }
-  ] }).populate('creadoPor', 'nombre role').populate('historialModificaciones.modificadoPor', 'nombre role').populate('evaluacionTutor.evaluadoPor', 'nombre').populate('valoracionEmpresarial.evaluadoPor', 'nombre');
+  ] }).populate('creadoPor', 'nombre role').populate('historialModificaciones.modificadoPor', 'nombre role').populate('evaluacionTutor.evaluadoPor', 'nombre').populate('valoracionEmpresarial.evaluadoPor', 'nombre')
+    .populate('solicitudesRevisionNota.solicitadaPor', 'nombre role')
+    .populate('solicitudesRevisionNota.respondidaPor', 'nombre role');
 }
 const listarActividades = asyncHandler(async (req, res) => {
   let practiceIds;
@@ -178,6 +180,49 @@ const guardarAutoevaluacion = asyncHandler(async (req, res) => {
   res.json({ ok: true, data: { autoevaluacion: actividad.autoevaluacion } });
 });
 
+const solicitarRevisionNota = asyncHandler(async (req, res) => {
+  if (req.user.role !== 'estudiante') throw new ApiError(403, 'Solo el estudiante puede solicitar la revisión de su nota.', { code: 'FORBIDDEN' });
+  const actividad = await Activity.findOne({ _id: req.params.id, ...(req.organization ? { organizationId: req.organization._id } : {}) });
+  if (!actividad) throw new ApiError(404, 'No se encontró la actividad.', { code: 'ACTIVITY_NOT_FOUND' });
+  await obtenerPracticaAccesible(req, actividad.practica);
+  const notaActual = actividad.evaluacionTutor?.calificacion;
+  if (!Number.isFinite(notaActual)) throw new ApiError(409, 'Todavía no hay una calificación oficial para revisar.', { code: 'GRADE_NOT_AVAILABLE' });
+  const motivo = String(req.body.motivo || '').trim();
+  if (motivo.length < 10 || motivo.length > 2000) throw new ApiError(400, 'Explica el motivo de la solicitud (entre 10 y 2000 caracteres).', { code: 'INVALID_GRADE_REVIEW' });
+  if (actividad.solicitudesRevisionNota.some((item) => item.estado === 'pendiente')) throw new ApiError(409, 'Ya tienes una solicitud de revisión pendiente para esta actividad.', { code: 'GRADE_REVIEW_PENDING' });
+  actividad.solicitudesRevisionNota.push({ motivo, solicitadaPor: req.user._id, solicitadaEn: new Date(), calificacionOriginal: notaActual });
+  await actividad.save();
+  res.status(201).json({ ok: true, data: { solicitudesRevisionNota: actividad.solicitudesRevisionNota } });
+});
+
+const responderRevisionNota = asyncHandler(async (req, res) => {
+  if (!['tutor', 'administrador'].includes(req.user.role)) throw new ApiError(403, 'Solo el tutor asignado puede responder esta solicitud.', { code: 'FORBIDDEN' });
+  const actividad = await Activity.findOne({ _id: req.params.id, ...(req.organization ? { organizationId: req.organization._id } : {}) });
+  if (!actividad) throw new ApiError(404, 'No se encontró la actividad.', { code: 'ACTIVITY_NOT_FOUND' });
+  const practica = await obtenerPracticaAccesible(req, actividad.practica);
+  if (['finalizada', 'suspendida'].includes(practica.estado)) throw new ApiError(409, 'La práctica está cerrada y no admite revisiones de notas.', { code: 'PRACTICE_CLOSED' });
+  const solicitud = actividad.solicitudesRevisionNota.id(req.params.solicitudId);
+  if (!solicitud) throw new ApiError(404, 'No se encontró la solicitud de revisión.', { code: 'GRADE_REVIEW_NOT_FOUND' });
+  if (solicitud.estado !== 'pendiente') throw new ApiError(409, 'Esta solicitud ya fue respondida.', { code: 'GRADE_REVIEW_ALREADY_RESOLVED' });
+  const estado = String(req.body.estado || '');
+  const respuestaTutor = String(req.body.respuestaTutor || '').trim();
+  const nueva = req.body.calificacionNueva;
+  if (!['aceptada', 'rechazada'].includes(estado) || respuestaTutor.length < 5 || respuestaTutor.length > 2000) throw new ApiError(400, 'Selecciona una decisión y escribe una respuesta de al menos 5 caracteres.', { code: 'INVALID_GRADE_REVIEW_RESPONSE' });
+  if (nueva !== undefined && nueva !== null && (estado !== 'aceptada' || !Number.isFinite(Number(nueva)) || Number(nueva) < 0 || Number(nueva) > 5)) throw new ApiError(400, 'La nueva calificación debe estar entre 0 y 5 y solo puede registrarse al aceptar la revisión.', { code: 'INVALID_REVISED_GRADE' });
+  solicitud.estado = estado;
+  solicitud.respuestaTutor = respuestaTutor;
+  solicitud.respondidaPor = req.user._id;
+  solicitud.respondidaEn = new Date();
+  if (estado === 'aceptada' && nueva !== undefined && nueva !== null && String(nueva).trim() !== '') {
+    solicitud.calificacionNueva = Number(nueva);
+    actividad.evaluacionTutor.calificacion = Number(nueva);
+    actividad.evaluacionTutor.evaluadoPor = req.user._id;
+    actividad.evaluacionTutor.evaluadoEn = new Date();
+  }
+  await actividad.save();
+  res.json({ ok: true, data: { solicitud } });
+});
+
 const guardarEvaluacionTutor = asyncHandler(async (req, res) => {
   const actividad = await Activity.findOne({ _id: req.params.id, ...(req.organization ? { organizationId: req.organization._id } : {}) });
   if (!actividad) throw new ApiError(404, 'No se encontró la actividad.', { code: 'ACTIVITY_NOT_FOUND' });
@@ -197,4 +242,4 @@ const guardarEvaluacionTutor = asyncHandler(async (req, res) => {
   res.json({ ok: true, data: { evaluacionTutor: actividad.evaluacionTutor } });
 });
 
-module.exports = { listarActividades, crearActividad, actualizarActividad, eliminarActividad, subirRecurso, descargarRecurso, guardarAutoevaluacion, guardarEvaluacionTutor };
+module.exports = { listarActividades, crearActividad, actualizarActividad, eliminarActividad, subirRecurso, descargarRecurso, guardarAutoevaluacion, guardarEvaluacionTutor, solicitarRevisionNota, responderRevisionNota };

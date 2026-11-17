@@ -43,26 +43,67 @@ async function checkFile(file) {
 const subir = asyncHandler(async (req, res) => {
   if (!req.file) throw new ApiError(400, 'Selecciona un archivo para entregar.', { code: 'FILE_REQUIRED' });
   let keep = false;
+  let connection;
   try {
     const ctx = await baseContext(req, req.params.courseId, req.params.activityId);
     if (ctx.role !== 'estudiante') throw new ApiError(403, 'Solo el estudiante puede entregar evidencias.', { code: 'STUDENT_UPLOAD_ONLY' });
     if (ctx.activity.status !== 'publicada') throw new ApiError(409, 'La actividad todavía no está publicada o ya fue cerrada.', { code: 'ACTIVITY_NOT_OPEN' });
     if (ctx.activity.opens_at && new Date(ctx.activity.opens_at) > new Date()) throw new ApiError(409, 'La actividad aún no está abierta.', { code: 'ACTIVITY_NOT_OPEN_YET' });
     if (!await checkFile(req.file)) throw new ApiError(415, 'El contenido del archivo no coincide con su formato.', { code: 'FILE_SIGNATURE_INVALID' });
-    const [previous] = await ctx.pool.execute("SELECT id, status FROM academic_course_evidences WHERE organization_id=? AND activity_id=? AND student_id=? ORDER BY submitted_at DESC LIMIT 1", [ctx.orgId, ctx.activity.id, ctx.studentId]);
-    if (previous.length && previous[0].status !== 'requiere_cambios') throw new ApiError(409, 'Ya entregaste esta actividad. Espera la revisión del docente o una solicitud de corrección.', { code: 'EVIDENCE_ALREADY_SUBMITTED' });
+
+    connection = await ctx.pool.getConnection();
+    await connection.beginTransaction();
+    const [previous] = await connection.execute(
+      'SELECT id, status FROM academic_course_evidences WHERE organization_id=? AND activity_id=? AND student_id=? ORDER BY submitted_at DESC, id DESC LIMIT 1 FOR UPDATE',
+      [ctx.orgId, ctx.activity.id, ctx.studentId]
+    );
+    if (previous.length && !['pendiente', 'requiere_cambios', 'retirada'].includes(previous[0].status)) {
+      throw new ApiError(409, 'Ya entregaste esta actividad. Solo puedes reemplazarla antes de la revisión o después de que el docente solicite correcciones.', { code: 'EVIDENCE_ALREADY_SUBMITTED' });
+    }
+    if (previous.length) {
+      await connection.execute(
+        "UPDATE academic_course_evidences SET status='reemplazada' WHERE organization_id=? AND activity_id=? AND student_id=? AND id=?",
+        [ctx.orgId, ctx.activity.id, ctx.studentId, previous[0].id]
+      );
+    }
     const evidenceId = newId();
     const original = path.basename(req.file.originalname).replace(/[\\r\\n\\"]/g, '_').slice(0, 180);
-    const [deadlineRows] = await ctx.pool.execute('SELECT due_at FROM academic_course_activity_student_deadlines WHERE organization_id=? AND activity_id=? AND student_id=? LIMIT 1', [ctx.orgId, ctx.activity.id, ctx.studentId]);
+    const [deadlineRows] = await connection.execute('SELECT due_at FROM academic_course_activity_student_deadlines WHERE organization_id=? AND activity_id=? AND student_id=? LIMIT 1', [ctx.orgId, ctx.activity.id, ctx.studentId]);
     const effectiveDueAt = deadlineRows[0]?.due_at || ctx.activity.due_at;
     const isLate = effectiveDueAt ? new Date() > new Date(effectiveDueAt) : false;
-    await ctx.pool.execute(
-      'INSERT INTO academic_course_evidences (id, organization_id, activity_id, student_id, original_name, stored_name, mime_type, file_size_bytes, status, teacher_feedback, reviewed_by_user_id, reviewed_at, submitted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, \'pendiente\', NULL, NULL, NULL, CURRENT_TIMESTAMP(3))',
+    await connection.execute(
+      "INSERT INTO academic_course_evidences (id, organization_id, activity_id, student_id, original_name, stored_name, mime_type, file_size_bytes, status, teacher_feedback, reviewed_by_user_id, reviewed_at, submitted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pendiente', NULL, NULL, NULL, CURRENT_TIMESTAMP(3))",
       [evidenceId, ctx.orgId, ctx.activity.id, ctx.studentId, original, path.basename(req.file.filename), req.file.mimetype, req.file.size]
     );
+    await connection.commit();
     keep = true;
-    res.status(201).json({ ok: true, data: { evidence: { id: evidenceId, originalName: original, status: 'pendiente', late: isLate } } });
-  } finally { if (!keep) await fs.unlink(req.file.path).catch(() => {}); }
+    res.status(201).json({ ok: true, data: { evidence: { id: evidenceId, originalName: original, status: 'pendiente', late: isLate, replacesPrevious: previous.length > 0 } } });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    throw error;
+  } finally {
+    if (connection) connection.release();
+    if (!keep) await fs.unlink(req.file.path).catch(() => {});
+  }
+});
+const retirar = asyncHandler(async (req, res) => {
+  const ctx = await baseContext(req, req.params.courseId, req.params.activityId);
+  if (ctx.role !== 'estudiante') throw new ApiError(403, 'Solo el estudiante puede retirar su propia entrega.', { code: 'STUDENT_WITHDRAW_ONLY' });
+  const evidenceId = String(req.params.evidenceId || '');
+  if (!validId(evidenceId)) throw new ApiError(400, 'Identificador de entrega inválido.', { code: 'INVALID_EVIDENCE_ID' });
+  const [rows] = await ctx.pool.execute(
+    'SELECT id, status FROM academic_course_evidences WHERE organization_id=? AND activity_id=? AND student_id=? AND id=? LIMIT 1',
+    [ctx.orgId, ctx.activity.id, ctx.studentId, evidenceId]
+  );
+  if (!rows.length) throw new ApiError(404, 'No se encontró tu entrega.', { code: 'EVIDENCE_NOT_FOUND' });
+  if (!['pendiente', 'requiere_cambios'].includes(rows[0].status)) {
+    throw new ApiError(409, 'No puedes retirar una entrega que ya fue aprobada, reprobada o revisada. Contacta al docente si necesitas ayuda.', { code: 'EVIDENCE_ALREADY_REVIEWED' });
+  }
+  await ctx.pool.execute(
+    "UPDATE academic_course_evidences SET status='retirada' WHERE organization_id=? AND activity_id=? AND student_id=? AND id=?",
+    [ctx.orgId, ctx.activity.id, ctx.studentId, evidenceId]
+  );
+  res.json({ ok: true, data: { withdrawn: true, evidenceId } });
 });
 const listar = asyncHandler(async (req, res) => {
   const ctx = await baseContext(req, req.params.courseId, req.params.activityId);
@@ -203,4 +244,4 @@ const calificar = asyncHandler(async (req, res) => {
   );
   res.json({ ok: true, data: { graded: true, score, maxScore, status: outcomeStatus } });
 });
-module.exports = { subir, listar, descargar, revisar, calificar, cambiarFechaIndividual };
+module.exports = { subir, retirar, listar, descargar, revisar, calificar, cambiarFechaIndividual };

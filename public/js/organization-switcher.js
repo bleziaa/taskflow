@@ -36,6 +36,46 @@
     node.textContent = text;
     return node;
   }
+  function updateNavigation(role) {
+    if (!['tutor', 'estudiante'].includes(role)) return;
+    const links = role === 'tutor' ? [
+      ['teacher-home.html', 'Inicio'], ['teacher-students.html', 'Mis estudiantes'],
+      ['courses.html', 'Mis cursos'], ['teacher-academic.html', 'Evaluación de prácticas'],
+      ['practices.html', 'Prácticas'], ['activities.html', 'Actividades'], ['reports.html', 'Informes'],
+    ] : [
+      ['dashboard.html', 'Inicio'], ['courses.html', 'Mis cursos'],
+      ['practices.html', 'Mi práctica'], ['activities.html', 'Actividades'],
+      ['evaluations.html', 'Evaluaciones'], ['reports.html', 'Mi progreso'],
+      ['dashboard.html#student-profile-section', 'Mi ficha'], ['profile.html', 'Mi perfil'],
+    ];
+    const existing = [...nav.querySelectorAll('a.nav-link')].filter(link =>
+      !link.closest('[data-institution-admin-link]') && link.id !== 'admin-link');
+    existing.forEach(link => { link.closest('li').hidden = true; });
+    const anchor = document.createComment('navegación por rol');
+    nav.prepend(anchor);
+    const current = window.location.pathname.split('/').pop();
+    links.forEach(([href, text]) => {
+      let link = existing.find(node => node.getAttribute('href') === href ||
+        (href === 'dashboard.html#student-profile-section' && node.getAttribute('href') === '#student-profile-section'));
+      let row = link && link.closest('li');
+      if (!link) {
+        row = document.createElement('li');
+        link = document.createElement('a');
+        link.className = 'nav-link';
+        row.append(link);
+      }
+      link.href = href;
+      link.textContent = text;
+      link.hidden = false;
+      row.hidden = false;
+      if (!href.includes('#') && href === current) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+      nav.insertBefore(row, anchor);
+    });
+    anchor.remove();
+    const logo = document.querySelector('.header .logo');
+    if (logo) logo.href = role === 'tutor' ? 'teacher-home.html' : 'dashboard.html';
+  }
   async function init() {
     try {
       const data = await request(API);
@@ -45,6 +85,7 @@
       select.replaceChildren(option('', 'Selecciona una organización'));
       organizations.forEach((org) => select.append(option(org.id, org.nombre + ' · ' + org.role)));
       const active = data.organizacionActiva;
+      updateNavigation(active?.role);
       let adminLink = nav.querySelector('[data-institution-admin-link]');
       if (!adminLink) {
         const linkItem = document.createElement('li');

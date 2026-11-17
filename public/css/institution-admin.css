@@ -69,3 +69,33 @@
 .course-editor-teachers select{max-width:460px;flex:1}
 .course-editor .institution-form-actions{justify-content:flex-end}
 @media(max-width:760px){.course-editor-module{grid-template-columns:1fr}.course-editor-module-number{padding-bottom:2px}.course-editor-heading{align-items:flex-start}.course-editor-teachers{align-items:stretch;flex-direction:column}.course-editor-teachers select{max-width:none}}
+
+
+/* Formulario de estudiante: ficha guiada en tres pasos */
+.student-registration-form{padding:clamp(18px,3vw,30px);border-color:var(--primario-borde);background:var(--bg-tarjeta)}
+.student-form-intro{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-bottom:20px;border-bottom:1px solid var(--borde-suave)}
+.student-form-intro h3{margin:0;color:var(--texto-principal);font-size:1.35rem;letter-spacing:-.025em}
+.student-form-intro p:last-child{max-width:720px;margin:7px 0 0;color:var(--texto-suave);font-size:.8rem;line-height:1.6}
+.student-form-intro p:last-child span,.student-form-grid label b{color:var(--primario);font-weight:850}
+.student-form-mark{display:grid;place-items:center;flex:0 0 54px;width:54px;height:54px;border-radius:17px;background:var(--primario-tenue);color:var(--primario);font-size:1.6rem}
+.student-form-section{padding:21px 0;border-bottom:1px solid var(--borde-suave)}
+.student-form-section-heading{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.student-form-section-heading>span{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:var(--primario-tenue);color:var(--primario-oscuro);font-size:.72rem;font-weight:850}
+.student-form-section-heading h4{margin:0;color:var(--texto-principal);font-size:.94rem}
+.student-form-section-heading p{margin:3px 0 0;color:var(--texto-tenue);font-size:.72rem}
+.student-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 18px}
+.student-form-grid label{gap:7px;font-size:.77rem}
+.student-form-grid label>span{color:var(--texto-principal)}
+.student-form-grid input,.student-form-grid select{min-height:46px;border-radius:10px}
+.student-form-grid input::placeholder{color:var(--texto-tenue);opacity:.85}
+.student-form-grid small{font-size:.68rem;line-height:1.45}
+.student-form-grid input:focus-visible,.student-form-grid select:focus-visible{outline:3px solid var(--primario-tenue);outline-offset:1px;border-color:var(--primario)}
+.student-form-grid :is(input,select):user-invalid{border-color:#c45b67}
+.student-form-feedback{margin:15px 0 0;padding:11px 13px;border:1px solid #c45b67;border-radius:10px;background:color-mix(in srgb,#c45b67 9%,var(--bg-tarjeta));color:var(--texto-principal);font-size:.78rem}
+.student-form-feedback[hidden]{display:none}
+.student-form-required{margin-left:auto;color:var(--texto-tenue);font-size:.68rem;align-self:center}
+.student-registration-form .institution-form-actions{align-items:center;padding-top:4px}
+.student-registration-form button:disabled{opacity:.65;cursor:wait}
+@media(max-width:650px){.student-form-grid{grid-template-columns:1fr}.student-form-intro{align-items:flex-start}.student-form-mark{width:44px;height:44px;flex-basis:44px}.student-form-required{width:100%;margin:3px 0 0}}
+
+.institution-field-error{display:block;margin-top:5px;color:#b42332;font-size:.76rem;line-height:1.35}.institution-form [aria-invalid="true"]{border-color:#b42332!important;outline-color:#b42332!important}

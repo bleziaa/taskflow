@@ -41,6 +41,8 @@ const subir = asyncHandler(async (req, res) => {
     if (req.user.role !== 'estudiante') throw new ApiError(403, 'Solo los estudiantes pueden entregar evidencias.', { code: 'FORBIDDEN' });
     if (['finalizada', 'suspendida'].includes(practica.estado)) throw new ApiError(409, 'La práctica está cerrada y no admite entregas.', { code: 'PRACTICE_CLOSED' });
     if (!await comprobarFirma(req.file)) throw new ApiError(415, 'El contenido del archivo no coincide con su formato.', { code: 'FILE_SIGNATURE_INVALID' });
+    const latestEvidence = await Evidence.findOne({ actividad: actividad._id, estudiante: student._id, ...(req.organization ? { organizationId: req.organization._id } : {}) }).sort({ createdAt: -1, _id: -1 });
+    if (latestEvidence && latestEvidence.estado !== 'requiere_cambios') throw new ApiError(409, 'Esta actividad ya fue enviada. Solo podrás subir otro archivo si el docente solicita correcciones.', { code: 'EVIDENCE_ALREADY_SUBMITTED' });
     const original = path.basename(req.file.originalname).replace(/[\r\n"]/g, '_').slice(0, 180);
     const evidencia = await Evidence.create({ actividad: actividad._id, estudiante: student._id, nombreOriginal: original, nombreAlmacenado: req.file.filename, mimeType: req.file.mimetype, tamano: req.file.size, ...(req.organization ? { organizationId: req.organization._id } : {}) });
     evidenciaId = evidencia._id;

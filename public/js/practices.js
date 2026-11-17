@@ -37,6 +37,12 @@
       ['p-empresa', state.companies.filter((c) => c.estado === 'activa'), (c) => c.razonSocial, (c) => c._id],
       ['p-tutor', state.tutors, (u) => u.nombre + ' (' + u.email + ')', (u) => u._id]
     ];
+    if (!fields.every(([, items]) => items.length > 0)) {
+      const missing = fields.filter(([, items]) => !items.length).map(([id]) => ({
+        'p-estudiante': 'un estudiante activo', 'p-empresa': 'una empresa activa', 'p-tutor': 'un tutor activo asignado a esta institución'
+      })[id]);
+      notify('Para registrar una práctica necesitas: ' + missing.join(', ') + '. Regístralos o actívalos desde Administración.', true);
+    }
     fields.forEach(([id, items, label, value]) => {
       const select = $('#' + id); select.replaceChildren();
       addOption(select, 'Seleccionar…', '');
@@ -90,6 +96,9 @@
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
     const id = data.id; delete data.id;
+    if (new Date(data.fechaFin) < new Date(data.fechaInicio)) {
+      notify('La fecha final no puede ser anterior a la fecha de inicio.', true); return;
+    }
     try {
       await mutate(id ? '/api/organization/practices/' + encodeURIComponent(id) : '/api/organization/practices', id ? 'PATCH' : 'POST', data);
       resetForm(); await load(); notify(id ? 'Práctica actualizada.' : 'Práctica creada y vinculada al estudiante.');
@@ -130,10 +139,15 @@
       $('#practice-user').textContent = state.user.nombre;
       const orgs = await api('/api/auth/organizations'); state.role = orgs.organizacionActiva?.role || null;
       if (!state.role) { notify('Selecciona una organización activa para consultar las prácticas.', true); return; }
-      if (state.role === 'administrador') {
-        $('#admin-link').hidden = false; $('#btn-nueva').hidden = false;
+      if (state.role === 'administrador' || state.role === 'tutor') {
+        $('#admin-link').hidden = state.role !== 'administrador'; $('#btn-nueva').hidden = false;
         $('#practice-admin-form').hidden = true;
         await loadOptions();
+        if (state.role === 'tutor') {
+          const select = $('#p-tutor');
+          select.replaceChildren(new Option(state.user.nombre, state.user._id));
+          select.addEventListener('change', () => { select.value = state.user._id; });
+        }
       }
       await load();
     } catch (error) { notify(error.message, true); }

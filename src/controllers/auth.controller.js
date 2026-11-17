@@ -117,6 +117,21 @@ const obtenerSesion = asyncHandler(async (req, res) => {
   });
 });
 
+const actualizarNombrePropio = asyncHandler(async (req, res) => {
+  const nombre = String(req.body.nombre || '').trim().replace(/\s+/g, ' ');
+  if (nombre.length < 2 || nombre.length > 80) {
+    throw new ApiError(400, 'El nombre debe tener entre 2 y 80 caracteres.', { code: 'INVALID_PROFILE_NAME' });
+  }
+  const usuario = await User.findById(req.session.userId);
+  if (!usuario || usuario.activo === false) throw new ApiError(401, 'La sesión no está activa.', { code: 'UNAUTHORIZED' });
+  usuario.nombre = nombre;
+  await usuario.save();
+  // Sincronizar fichas del estudiante para evitar mostrar nombres distintos.
+  const Student = require('../models/Student');
+  await Student.updateMany({ usuario: usuario._id }, { $set: { nombre } });
+  res.json({ ok: true, data: { usuario: usuario.toJSON(), mensaje: 'Nombre actualizado correctamente.' } });
+});
+
 const cambiarPassword = asyncHandler(async (req, res) => {
   const nuevaPassword = String(req.body.newPassword || '');
   if (nuevaPassword.length < 12 || nuevaPassword.length > 128) {
@@ -203,6 +218,7 @@ const cerrarSesion = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  actualizarNombrePropio,
   obtenerCsrfToken,
   registrar,
   iniciarSesion,

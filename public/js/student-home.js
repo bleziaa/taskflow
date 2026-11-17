@@ -3,7 +3,16 @@
 
   const $ = (selector) => document.querySelector(selector);
   const message = $('#student-message');
-  const state = { practices: [], activities: [], evaluations: [], report: null };
+  const fieldRules = window.TaskFlowFieldRules;
+  function bindProfilePhoneValidation() {
+    const input = $('#profile-phone');
+    if (!input || !fieldRules) return;
+    const validatePhone = () => input.setCustomValidity(fieldRules.isValidPhone(input.value) ? '' : 'El teléfono debe contener entre 7 y 15 dígitos.');
+    input.addEventListener('input', validatePhone);
+    validatePhone();
+  }
+
+  const state = { practices: [], activities: [], evaluations: [], report: null, profileCompleted: false };
 
   function setMessage(text, type = 'info') {
     message.textContent = text;
@@ -118,6 +127,77 @@
     }
   }
 
+  function profileFeedback(text, type = 'info') {
+    const box = $('#student-profile-feedback');
+    if (!box) return;
+    box.textContent = text;
+    box.className = 'student-profile-feedback' + (type === 'error' ? ' is-error' : type === 'success' ? ' is-success' : '');
+    box.hidden = !text;
+  }
+
+  async function loadStudentProfile() {
+    const form = $('#student-profile-form');
+    if (!form) return;
+    try {
+      const data = await request('/api/organization/profile');
+      const student = data.estudiante || {};
+      $('#profile-code').value = student.codigo || '';
+      $('#profile-name').value = student.nombre || '';
+      $('#profile-email').value = student.email || '';
+      $('#profile-phone').value = student.telefono || '';
+      $('#profile-program').value = student.programa || '';
+      $('#profile-semester').value = student.semestre ? String(student.semestre) : '';
+      setText('#profile-company', student.empresa?.razonSocial || 'Pendiente de asignación');
+      setText('#profile-tutor', student.tutor?.nombre || 'Pendiente de asignación');
+      const completed = student.perfilCompletado === true;
+      state.profileCompleted = completed;
+      $('#student-profile-completed').hidden = !completed;
+      form.hidden = completed;
+      const heading = $('#student-profile-title');
+      if (heading) heading.textContent = completed ? 'Mi ficha académica' : 'Completa tu ficha académica';
+    } catch (error) {
+      if (error.status === 404 || error.code === 'STUDENT_PROFILE_NOT_FOUND') {
+        profileFeedback(error.message || 'Tu cuenta aún no tiene una ficha vinculada. Solicita al administrador que la registre con el correo de tu cuenta.', 'error');
+        form.querySelectorAll('input:not([disabled]), select, button').forEach((control) => { control.disabled = true; });
+        return;
+      }
+      profileFeedback(error.message || 'No se pudo cargar tu ficha académica.', 'error');
+    }
+  }
+
+  async function saveStudentProfile(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = $('#save-student-profile');
+    if (!form.reportValidity()) return;
+    const payload = Object.fromEntries(new FormData(form).entries());
+    payload.semestre = Number(payload.semestre);
+    button.disabled = true;
+    button.textContent = 'Guardando…';
+    try {
+      const csrf = await request('/api/auth/csrf-token');
+      const result = await request('/api/organization/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf.csrfToken },
+        body: JSON.stringify(payload),
+      });
+      const student = result.estudiante || {};
+      $('#profile-name').value = student.nombre || payload.nombre;
+      setText('#usuario-nombre', student.nombre || payload.nombre);
+      setText('#student-first-name', (student.nombre || payload.nombre).trim().split(/\s+/)[0]);
+      profileFeedback(result.mensaje || (state.profileCompleted ? 'Los cambios de tu ficha se guardaron correctamente.' : 'Tu ficha se guardó correctamente.'), 'success');
+      state.profileCompleted = true;
+      form.hidden = true;
+      $('#student-profile-completed').hidden = false;
+      $('#cancel-student-profile').hidden = true;
+    } catch (error) {
+      profileFeedback(error.message || 'No fue posible guardar tus datos.', 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = state.profileCompleted ? 'Guardar cambios' : 'Guardar mis datos';
+    }
+  }
+
   async function load() {
     try {
       const me = await request('/api/auth/me');
@@ -151,6 +231,8 @@
         setMessage('Este inicio está diseñado para estudiantes. Tu espacio correspondiente se habilitará según tu rol institucional.', 'info');
         return;
       }
+
+      await loadStudentProfile();
 
       const base = '/api/organization';
       const [practices, activities, evaluations, reports] = await Promise.all([
@@ -193,5 +275,32 @@
   }
 
   $('#btn-logout')?.addEventListener('click', logout);
+  $('#student-profile-form')?.addEventListener('submit', saveStudentProfile);
+  $('#edit-student-profile')?.addEventListener('click', () => {
+    const form = $('#student-profile-form');
+    if (form) {
+      form.hidden = false;
+      $('#student-profile-completed').hidden = true;
+      $('#cancel-student-profile').hidden = false;
+      $('#save-student-profile').textContent = 'Guardar cambios';
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $('#profile-name')?.focus();
+    }
+  });
+  $('#cancel-student-profile')?.addEventListener('click', async () => {
+    const form = $('#student-profile-form');
+    const cancel = $('#cancel-student-profile');
+    cancel.disabled = true;
+    await loadStudentProfile();
+    if (state.profileCompleted) {
+      form.hidden = true;
+      $('#student-profile-completed').hidden = false;
+    }
+    cancel.hidden = true;
+    cancel.disabled = false;
+    $('#save-student-profile').textContent = state.profileCompleted ? 'Guardar cambios' : 'Guardar mis datos';
+    profileFeedback('Edición cancelada. Se conservaron los datos guardados.', 'info');
+  });
+  bindProfilePhoneValidation();
   load();
 })();

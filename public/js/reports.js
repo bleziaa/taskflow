@@ -25,9 +25,10 @@ function render() {
  state.reports.forEach(r => {
   const card = node('article', '', 'report-card');
   const head = node('div', '', 'report-card-head');
-  const title = node('div', '', 'report-title'); title.append(node('h2', r.practica.titulo), node('p', (r.estudiante?.nombre || 'Estudiante') + ' · ' + (r.empresa?.razonSocial || 'Empresa sin asignar')));
-  head.append(title, node('span', r.practica.estado.replace('_', ' '), 'report-status')); card.append(head);
-  const details = node('p', 'Tutor: ' + (r.tutor?.nombre || '—') + ' · Periodo: ' + new Date(r.practica.fechaInicio).toLocaleDateString('es-CO') + ' – ' + new Date(r.practica.fechaFin).toLocaleDateString('es-CO'), 'report-meta'); card.append(details);
+  const title = node('div', '', 'report-title'); title.append(node('h2', r.practica?.titulo || 'Sin práctica registrada'), node('p', (r.estudiante?.nombre || 'Estudiante') + ' · ' + (r.empresa?.razonSocial || 'Empresa sin asignar')));
+  head.append(title, node('span', r.practica ? r.practica.estado.replace('_', ' ') : 'Sin práctica', 'report-status')); card.append(head);
+  const period = r.practica?.fechaInicio && r.practica?.fechaFin ? new Date(r.practica.fechaInicio).toLocaleDateString('es-CO') + ' – ' + new Date(r.practica.fechaFin).toLocaleDateString('es-CO') : 'Sin periodo definido';
+  const details = node('p', 'Tutor: ' + (r.tutor?.nombre || '—') + ' · Periodo: ' + period, 'report-meta'); card.append(details);
   const bar = node('div', '', 'report-progress'); const fill = node('div', '', 'report-progress-fill'); fill.style.width = r.resumen.progreso + '%'; bar.append(fill);
   card.append(node('p', r.resumen.progreso + '% de actividades completadas · ' + r.resumen.completadas + '/' + r.resumen.totalActividades, 'report-meta'), bar);
   const stats = node('div', '', 'report-inline-stats');
@@ -46,7 +47,7 @@ function render() {
 function csvEscape(v) { return '"' + String(v ?? '').replace(/"/g, '""') + '"'; }
 function exportCsv() {
  const rows = [['Estudiante','Código','Práctica','Empresa','Tutor','Estado práctica','Progreso (%)','Actividades','Completadas','En revisión','Pendientes','Evidencias','Evidencias aprobadas','Calificación','Concepto']];
- state.reports.forEach(r => rows.push([r.estudiante?.nombre,r.estudiante?.codigo,r.practica.titulo,r.empresa?.razonSocial,r.tutor?.nombre,r.practica.estado,r.resumen.progreso,r.resumen.totalActividades,r.resumen.completadas,r.resumen.enRevision,r.resumen.pendientes,r.resumen.totalEvidencias,r.resumen.evidenciasAprobadas,r.evaluacion?.calificacion,r.evaluacion?.concepto].map(csvEscape)));
+ state.reports.forEach(r => rows.push([r.estudiante?.nombre,r.estudiante?.codigo,r.practica?.titulo || 'Sin práctica',r.empresa?.razonSocial,r.tutor?.nombre,r.practica?.estado || 'Sin práctica',r.resumen.progreso,r.resumen.totalActividades,r.resumen.completadas,r.resumen.enRevision,r.resumen.pendientes,r.resumen.totalEvidencias,r.resumen.evidenciasAprobadas,r.evaluacion?.calificacion,r.evaluacion?.concepto].map(csvEscape)));
  const blob = new Blob(['\uFEFF' + rows.map(row => row.join(';')).join('\r\n')], { type: 'text/csv;charset=utf-8;' });
  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'informe-taskflow.csv'; a.click(); URL.revokeObjectURL(url);
 }

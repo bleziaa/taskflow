@@ -165,3 +165,17 @@ html[data-organization-branding] .course-code,
 html[data-organization-branding] .course-resource a,
 html[data-organization-branding] .courses-footer b{color:var(--primario);}
 html[data-organization-branding] .course-counts span{background:var(--primario-tenue);color:var(--primario-oscuro);}
+
+/* Los enlaces ocultos por rol deben seguir ocultos en escritorio y móvil. */
+.header .nav-lista > li[hidden],.header .nav-lista .nav-link[hidden]{display:none!important}
+
+/* Evita que "Evaluación de prácticas" se recorte en móviles de hasta 420px. */
+@media(max-width:420px){
+ .header .nav-lista{grid-template-columns:1fr!important}
+ .header .nav-lista .nav-link{white-space:normal;overflow-wrap:anywhere}
+}
+
+/* La paleta institucional no debe reducir el contraste AA de las acciones. */
+html[data-organization-branding] .btn-primario,
+html[data-organization-branding] .btn-primario:visited{background:var(--accion-fondo);color:var(--accion-texto)}
+html[data-organization-branding] .btn-primario:hover{background:var(--accion-fondo-hover);color:var(--accion-texto)}

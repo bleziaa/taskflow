@@ -19,32 +19,49 @@
 <li><a class="nav-link" href="reports.html">Informes</a></li>
 <li><span class="usuario-nombre" id="admin-institution-name">Cargando…</span></li>
 <li><button class="btn btn-secundario btn-sm" id="btn-logout" type="button">Cerrar sesión</button></li>
-</ul></nav></div></header>
+</ul><a class="nav-link" href="profile.html">Mi perfil</a></nav></div></header>
 <main class="institution-admin" id="contenido">
 <section class="institution-hero"><div><p class="institution-eyebrow">GESTIÓN DEL ESPACIO DE TRABAJO</p><h1>Administración institucional</h1><p>Administra los registros académicos de esta institución: estudiantes, empresas de prácticas y asignaciones docentes.</p></div><div class="institution-hero-mark" aria-hidden="true">⌂</div></section>
 <p id="institution-message" class="institution-message" role="status" aria-live="polite" hidden></p>
 <section class="institution-kpis" aria-label="Resumen"><article><span>Estudiantes registrados</span><strong id="kpi-students">—</strong></article><article><span>Empresas de prácticas</span><strong id="kpi-companies">—</strong></article><article><span>Docentes disponibles</span><strong id="kpi-tutors">—</strong></article></section>
 <section class="institution-panel" aria-labelledby="students-title">
 <div class="institution-panel-heading"><div><p class="institution-eyebrow">REGISTRO ACADÉMICO</p><h2 id="students-title">Administración de estudiantes</h2><p>Registra la ficha académica, asigna empresa y tutor, y conserva el historial de cada estudiante.</p></div><button class="btn btn-primario" id="new-student" type="button">＋ Registrar estudiante</button></div>
-<form id="student-form" class="institution-form" hidden><input type="hidden" name="id"><h3 id="student-form-title">Nuevo estudiante</h3>
+<form id="student-form" class="institution-form student-registration-form" autocomplete="on" hidden novalidate>
+<input type="hidden" name="id">
+<div class="student-form-intro"><div><p class="institution-eyebrow">FICHA ACADÉMICA</p><h3 id="student-form-title">Registrar estudiante</h3><p>Completa los datos de identificación y vincula al estudiante con su proceso de prácticas. Los campos con <span aria-hidden="true">*</span> son obligatorios.</p></div><span class="student-form-mark" aria-hidden="true">♙</span></div>
+<section class="student-form-section" aria-labelledby="student-personal-title"><div class="student-form-section-heading"><span>01</span><div><h4 id="student-personal-title">Información personal</h4><p>Datos para identificar y contactar al estudiante.</p></div></div>
 <div class="institution-form-grid">
-<label>Código estudiantil<input name="codigo" required maxlength="30"></label><label>Nombre completo<input name="nombre" required minlength="2" maxlength="120"></label>
-<label>Correo institucional<input name="email" type="email" required></label><label>Teléfono<input name="telefono" maxlength="25" type="tel"></label>
-<label>Programa académico<input name="programa" required maxlength="120" value="Ingeniería de Software"></label><label>Semestre<input name="semestre" type="number" min="1" max="12" required value="1"></label>
-<label>Empresa de prácticas<select name="empresa" id="student-company"><option value="">Sin asignar</option></select></label><label>Docente / tutor<select name="tutor" id="student-tutor"><option value="">Sin asignar</option></select></label>
-<label>Estado<select name="estado"><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></label>
-</div><div class="institution-form-actions"><button class="btn btn-primario" type="submit">Guardar estudiante</button><button class="btn btn-secundario" id="cancel-student" type="button">Cancelar</button></div></form>
+<label><span>Código estudiantil <b aria-hidden="true">*</b></span><input name="codigo" required minlength="1" maxlength="30" pattern="^[A-Za-z0-9._-]+$" placeholder="Ej. 2026-IS-001" autocomplete="off" aria-describedby="student-code-help"><small id="student-code-help">Código único asignado por la institución.</small></label>
+<label><span>Nombre completo <b aria-hidden="true">*</b></span><input name="nombre" required minlength="2" maxlength="120" placeholder="Nombre y apellidos" autocomplete="name"></label>
+<label><span>Correo institucional <b aria-hidden="true">*</b></span><input name="email" type="email" required maxlength="254" placeholder="estudiante@universidad.edu.co" autocomplete="email"></label>
+<label><span>Teléfono de contacto</span><input name="telefono" maxlength="25" type="tel" pattern="[+0-9(). -]{7,25}" title="Usa entre 7 y 15 dígitos; puedes incluir +, espacios, paréntesis o guiones." placeholder="Ej. 300 123 4567" autocomplete="tel" inputmode="tel"></label>
+</div></section>
+<section class="student-form-section" aria-labelledby="student-academic-title"><div class="student-form-section-heading"><span>02</span><div><h4 id="student-academic-title">Información académica</h4><p>Programa y nivel que cursa actualmente.</p></div></div>
+<div class="institution-form-grid">
+<label><span>Programa académico <b aria-hidden="true">*</b></span><input name="programa" required minlength="2" maxlength="120" value="Ingeniería de Software" placeholder="Ej. Ingeniería de Software"></label>
+<label><span>Semestre actual <b aria-hidden="true">*</b></span><select name="semestre" required><option value="">Selecciona el semestre</option><option value="1">1.º semestre</option><option value="2">2.º semestre</option><option value="3">3.º semestre</option><option value="4">4.º semestre</option><option value="5">5.º semestre</option><option value="6">6.º semestre</option><option value="7">7.º semestre</option><option value="8">8.º semestre</option><option value="9">9.º semestre</option><option value="10">10.º semestre</option><option value="11">11.º semestre</option><option value="12">12.º semestre</option></select></label>
+</div></section>
+<section class="student-form-section" aria-labelledby="student-practice-title"><div class="student-form-section-heading"><span>03</span><div><h4 id="student-practice-title">Vinculación de prácticas</h4><p>Estas asignaciones pueden completarse o actualizarse más adelante.</p></div></div>
+<div class="institution-form-grid">
+<label><span>Empresa de prácticas</span><select name="empresa" id="student-company"><option value="">Sin asignar</option></select><small>Solo se muestran empresas activas de esta institución.</small></label>
+<label><span>Docente / tutor</span><select name="tutor" id="student-tutor"><option value="">Sin asignar</option></select><small>Selecciona el responsable del acompañamiento académico.</small></label>
+<label><span>Estado del registro</span><select name="estado"><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></label>
+</div></section>
+<p class="student-form-feedback" id="student-form-feedback" data-form-feedback role="status" aria-live="polite" hidden></p>
+<div class="institution-form-actions"><button class="btn btn-primario" type="submit">Guardar estudiante</button><button class="btn btn-secundario" id="cancel-student" type="button">Cancelar</button><button class="btn btn-secundario" id="delete-student-form" type="button" hidden>Eliminar estudiante</button><span class="student-form-required">* Campos obligatorios</span></div>
+</form>
 <label class="institution-search">Buscar estudiante<input id="search-students" type="search" placeholder="Nombre, código o correo"></label>
 <div class="institution-table-wrap"><table class="institution-table"><thead><tr><th>Estudiante</th><th>Programa</th><th>Empresa</th><th>Docente</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="students-rows"><tr><td colspan="6">Cargando estudiantes…</td></tr></tbody></table></div><div id="students-cards" class="institution-cards"></div>
 </section>
 <section class="institution-panel" aria-labelledby="companies-title">
 <div class="institution-panel-heading"><div><p class="institution-eyebrow">RED EMPRESARIAL</p><h2 id="companies-title">Administración de empresas</h2><p>Gestiona las empresas donde se desarrollan las prácticas y sus datos de contacto.</p></div><button class="btn btn-primario" id="new-company" type="button">＋ Registrar empresa</button></div>
-<form id="company-form" class="institution-form" hidden><input type="hidden" name="id"><h3 id="company-form-title">Nueva empresa</h3>
+<form id="company-form" class="institution-form" hidden novalidate><input type="hidden" name="id"><h3 id="company-form-title">Nueva empresa</h3>
+<p class="student-form-feedback" id="company-form-feedback" data-form-feedback role="status" aria-live="polite" hidden></p>
 <div class="institution-form-grid">
 <label>Razón social<input name="razonSocial" required minlength="2" maxlength="140"></label><label>NIT<input name="nit" required maxlength="30"></label>
-<label>Sector<input name="sector" maxlength="100"></label><label>Ciudad<input name="ciudad" required maxlength="100"></label>
+<label>Sector<input name="sector" maxlength="100"></label><label>Ciudad<input name="ciudad" required minlength="2" maxlength="100"></label>
 <label>Dirección<input name="direccion" maxlength="180"></label><label>Persona de contacto<input name="contactoNombre" maxlength="120"></label>
-<label>Correo de contacto<input name="contactoEmail" type="email"></label><label>Teléfono<input name="telefono" type="tel" maxlength="25"></label>
+<label>Correo de contacto<input name="contactoEmail" type="email" maxlength="254"></label><label>Teléfono<input name="telefono" type="tel" maxlength="25" pattern="[+0-9(). -]{7,25}" title="Usa entre 7 y 15 dígitos; puedes incluir +, espacios, paréntesis o guiones."></label>
 <label>Estado<select name="estado"><option value="activa">Activa</option><option value="inactiva">Inactiva</option></select></label>
 </div><div class="institution-form-actions"><button class="btn btn-primario" type="submit">Guardar empresa</button><button class="btn btn-secundario" id="cancel-company" type="button">Cancelar</button></div></form>
 <label class="institution-search">Buscar empresa<input id="search-companies" type="search" placeholder="Razón social, NIT o ciudad"></label>
@@ -65,5 +82,5 @@
 <p class="institution-footnote">Los registros y las asignaciones se limitan al espacio institucional seleccionado. Las cuentas de acceso y membresías se gestionan desde el módulo global de usuarios.</p>
 </main>
 <footer class="institution-footer"><b>TaskFlow</b><span>Administración académica · Espacio institucional</span><span>© 2026</span></footer>
-<script src="js/ui.js" defer></script><script src="js/institution-admin.js?v=20261106-unidades4" defer></script><script src="js/theme.js" defer></script><script src="js/organization-switcher.js" defer></script>
+<script src="/shared/field-rules.js" defer></script><script src="js/ui.js" defer></script><script src="js/institution-admin.js?v=20261107-eliminar-estudiante" defer></script><script src="js/theme.js" defer></script><script src="js/organization-switcher.js" defer></script>
 </body></html>

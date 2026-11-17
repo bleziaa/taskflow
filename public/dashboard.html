@@ -14,8 +14,9 @@
   <link rel="stylesheet" href="css/dashboard-fix.css">
   <link rel="stylesheet" href="css/organization-switcher.css">
   <link rel="stylesheet" href="css/student-polish.css">
-  <link rel="stylesheet" href="css/student-home.css">
+  <link rel="stylesheet" href="css/student-home.css?v=20261114a">
 <link rel="stylesheet" href="css/ui-compact.css?v=20261106i">
+<link rel="stylesheet" href="css/taskflow-refresh.css?v=20261116a">
 </head>
 <body class="student-home">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -35,6 +36,8 @@
           <li><a href="activities.html" class="nav-link">Actividades</a></li>
           <li><a href="evaluations.html" class="nav-link">Evaluaciones</a></li>
           <li><a href="reports.html" class="nav-link">Mi progreso</a></li>
+          <li><a href="#student-profile-section" class="nav-link">Mi ficha</a></li>
+          <li><a href="profile.html" class="nav-link">Mi perfil</a></li>
           <li id="teacher-nav-students" hidden><a href="teacher-students.html" class="nav-link">Mis estudiantes</a></li>
           <li class="nav-acciones">
             <div class="usuario-sesion" aria-live="polite"><span class="usuario-nombre" id="usuario-nombre">Cargando…</span><span class="usuario-email" id="usuario-email"></span></div>
@@ -54,6 +57,26 @@
         <p>Este es tu punto de partida para organizar tu práctica, cumplir tus actividades y seguir tu progreso.</p>
       </div>
       <div class="welcome-mark" aria-hidden="true"><span>TF</span><i></i><i></i><i></i></div>
+    </section>
+
+    <section class="student-card student-profile-card" id="student-profile-section" aria-labelledby="student-profile-title">
+      <div class="student-card-heading"><div><p class="eyebrow">TUS DATOS</p><h2 id="student-profile-title">Mi ficha académica</h2><p class="card-description">Si encuentras un dato incorrecto o necesitas corregirlo, puedes editar tu ficha y guardar los cambios cuando quieras.</p></div><span class="profile-lock-label">Ficha personal</span></div>
+      <div id="student-profile-completed" class="student-profile-completed" hidden>
+        <span class="profile-completed-icon" aria-hidden="true">✓</span>
+        <div><strong>Tu ficha ya está completa</strong><p>Tus datos quedaron guardados. No volveremos a pedirte que completes este formulario.</p></div>
+        <button class="btn btn-secundario" id="edit-student-profile" type="button">Actualizar mis datos</button>
+      </div>
+      <form id="student-profile-form" class="student-profile-form" novalidate hidden>
+        <label><span>Código estudiantil</span><input name="codigo" id="profile-code" readonly disabled><small>Lo asigna la institución.</small></label>
+        <label><span>Nombre completo *</span><input name="nombre" id="profile-name" required minlength="2" maxlength="120" autocomplete="name" placeholder="Escribe tu nombre completo"></label>
+        <label><span>Correo institucional</span><input name="email" id="profile-email" type="email" readonly disabled><small>Para cambiarlo, solicita ayuda al administrador.</small></label>
+        <label><span>Teléfono</span><input name="telefono" id="profile-phone" type="tel" maxlength="25" pattern="[+0-9(). -]{7,25}" title="Usa entre 7 y 15 dígitos; puedes incluir +, espacios, paréntesis o guiones." autocomplete="tel" placeholder="Tu número de contacto"></label>
+        <label><span>Programa académico *</span><input name="programa" id="profile-program" required minlength="2" maxlength="120" placeholder="Ej. Ingeniería de Software"></label>
+        <label><span>Semestre actual *</span><select name="semestre" id="profile-semester" required><option value="">Selecciona tu semestre</option><option value="1">1° semestre</option><option value="2">2° semestre</option><option value="3">3° semestre</option><option value="4">4° semestre</option><option value="5">5° semestre</option><option value="6">6° semestre</option><option value="7">7° semestre</option><option value="8">8° semestre</option><option value="9">9° semestre</option><option value="10">10° semestre</option><option value="11">11° semestre</option><option value="12">12° semestre</option></select></label>
+        <div class="profile-readonly-facts"><span>Empresa asignada<strong id="profile-company">Pendiente</strong></span><span>Docente / tutor<strong id="profile-tutor">Pendiente</strong></span></div>
+        <p id="student-profile-feedback" class="student-profile-feedback" role="status" aria-live="polite" hidden></p>
+        <div class="student-profile-actions"><button class="btn btn-primario" id="save-student-profile" type="submit">Guardar mis datos</button><button class="btn btn-secundario" id="cancel-student-profile" type="button" hidden>Cancelar edición</button><span>Los campos marcados con * son obligatorios. Puedes corregirlos más adelante.</span></div>
+      </form>
     </section>
 
     <section class="student-kpis" aria-label="Resumen de tu práctica">
@@ -97,7 +120,7 @@
   </main>
 
   <footer class="student-footer"><span>TaskFlow</span><span>Tu práctica, tu progreso, tu camino.</span><span>© 2026 TaskFlow</span></footer>
-  <script src="js/ui.js" defer></script>
+  <script src="/shared/field-rules.js" defer></script><script src="js/ui.js" defer></script>
   <script src="js/student-home.js" defer></script>
   <script src="js/theme.js" defer></script>
   <script src="js/organization-switcher.js" defer></script>
