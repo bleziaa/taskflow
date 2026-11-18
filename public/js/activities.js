@@ -5,7 +5,7 @@ const state = { user: null, role: null, practices: [], activities: [], selectedM
 const labels = { pendiente: 'Pendiente', en_revision: 'En revisión', completada: 'Completada' };
 const priorities = { baja: 'Prioridad baja', media: 'Prioridad media', alta: 'Prioridad alta' };
 const evidenceLabels = { pendiente: 'Pendiente de revisión', aprobada: 'Aprobada', requiere_cambios: 'Requiere correcciones' };
-function notify(text, error = false, target = '#activity-message') { const node = $(target); node.textContent = text; node.className = 'form-mensaje ' + (error ? 'error' : 'exito'); }
+function notify(text, error = false, target = '#activity-message') { const node = $(target); node.textContent = text; node.className = 'form-mensaje mostrar ' + (error ? 'error' : 'exito'); }
 async function api(url, options = {}) {
  const headers = { Accept: 'application/json', ...(options.headers || {}) };
  if (options.body && !(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
@@ -67,7 +67,7 @@ function render() {
    });
    card.append(history);
   }
-  if (a.recurso?.nombreOriginal) { const resource = el('a', '📄 Descargar material: ' + a.recurso.nombreOriginal); resource.href = '/api/organization/activities/' + encodeURIComponent(a._id) + '/resource/download'; resource.className = 'activity-resource-download'; resource.setAttribute('download', a.recurso.nombreOriginal); card.append(resource); }
+  if (a.recurso?.nombreOriginal) { const view = el('a', 'Ver material PDF'); view.href = '/pdf-viewer.html?file=' + encodeURIComponent('/api/organization/activities/' + a._id + '/resource/download'); view.target = '_blank'; view.rel = 'noopener'; card.append(view); const resource = el('a', '📄 Descargar material: ' + a.recurso.nombreOriginal); resource.href = '/api/organization/activities/' + encodeURIComponent(a._id) + '/resource/download'; resource.className = 'activity-resource-download'; resource.setAttribute('download', a.recurso.nombreOriginal); card.append(resource); }
   if (state.role !== 'estudiante') {
    const actions = el('div', ''); actions.className = 'activity-actions';
    const edit = el('button', 'Editar'); edit.type = 'button'; edit.className = 'btn btn-secundario btn-sm'; edit.dataset.action = 'edit'; edit.dataset.id = a._id;
@@ -84,16 +84,17 @@ function render() {
     const statusText = latest.estado === 'aprobada' ? 'Actividad aprobada' : 'Ya enviada · En espera de revisión';
     const statusHead = el('div', ''); statusHead.className = 'activity-card-head'; statusHead.append(el('strong', statusText), el('span', evidenceLabels[latest.estado] || 'Entregada'));
     statusBox.append(statusHead, el('p', 'Archivo entregado: ' + latest.nombreOriginal));
+    if (latest.observacionTutor) statusBox.append(el('p', 'Observaciones de la entrega: ' + latest.observacionTutor));
     if (latest.createdAt) statusBox.append(el('small', 'Enviada el ' + new Date(latest.createdAt).toLocaleString('es-CO')));
-    const download = el('a', 'Descargar mi entrega'); download.href = '/api/organization/evidences/' + encodeURIComponent(latest._id) + '/download'; download.className = 'evidence-download'; statusBox.append(download); card.append(statusBox);
+    const download = el('a', 'Descargar mi entrega'); download.href = '/api/organization/evidences/' + encodeURIComponent(latest._id) + '/download'; download.className = 'evidence-download'; statusBox.append(download); if (latest.mimeType === 'application/pdf') { const view = el('a', 'Ver mi PDF'); view.href = '/pdf-viewer.html?file=' + encodeURIComponent(new URL(download.href).pathname); view.target = '_blank'; view.rel = 'noopener'; statusBox.append(view); } card.append(statusBox);
    } else {
     if (latest?.estado === 'requiere_cambios') {
      const correction = el('section', ''); correction.className = 'evidence-item'; correction.append(el('strong', 'El docente solicitó correcciones'));
      if (latest.observacionTutor) correction.append(el('p', 'Observaciones: ' + latest.observacionTutor)); card.append(correction);
     }
     const form = el('form', ''); form.className = 'evidence-upload'; form.dataset.activity = a._id;
-    const label = el('label', latest ? 'Adjuntar archivo corregido (PDF, DOCX o ZIP · máximo 10 MB)' : 'Adjuntar evidencia (PDF, DOCX o ZIP · máximo 10 MB)'); label.htmlFor = 'file-' + a._id;
-    const input = el('input', ''); input.type = 'file'; input.id = 'file-' + a._id; input.name = 'archivo'; input.accept = '.pdf,.docx,.zip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip'; input.required = true;
+    const label = el('label', latest ? 'Adjuntar archivo corregido (PDF, DOC o DOCX · máximo 10 MB)' : 'Adjuntar evidencia (PDF, DOC o DOCX · máximo 10 MB)'); label.htmlFor = 'file-' + a._id;
+    const input = el('input', ''); input.type = 'file'; input.id = 'file-' + a._id; input.name = 'archivo'; input.accept = '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'; input.required = true;
     const submit = el('button', latest ? 'Enviar corrección' : 'Enviar actividad'); submit.type = 'submit'; submit.className = 'btn btn-primario btn-sm'; form.append(label, input, submit); card.append(form);
    }
    const evidence = el('button', 'Ver mis entregas'); evidence.type = 'button'; evidence.className = 'btn btn-secundario btn-sm'; evidence.dataset.action = 'evidences'; evidence.dataset.id = a._id;
@@ -105,7 +106,7 @@ function render() {
    const scoreLabel = el('label', '¿Cómo valoras tu trabajo? (0 a 5)'); const score = el('input'); score.type = 'number'; score.name = 'calificacion'; score.min = '0'; score.max = '5'; score.step = '0.1'; score.required = true; score.value = a.autoevaluacion?.calificacion ?? '';
    const reflectionLabel = el('label', 'Reflexión'); const reflection = el('textarea'); reflection.name = 'reflexion'; reflection.rows = 2; reflection.maxLength = 2000; reflection.placeholder = '¿Qué aprendiste y qué podrías mejorar?'; reflection.value = a.autoevaluacion?.reflexion || '';
    const submit = el('button', a.autoevaluacion?.evaluadoEn ? 'Actualizar autoevaluación' : 'Enviar autoevaluación'); submit.type = 'submit'; submit.className = 'btn btn-secundario btn-sm';
-   form.append(scoreLabel, score, reflectionLabel, reflection, submit); card.append(form);
+   score.id = 'self-score-' + a._id; scoreLabel.htmlFor = score.id; reflection.id = 'self-reflection-' + a._id; reflectionLabel.htmlFor = reflection.id; form.append(scoreLabel, score, reflectionLabel, reflection, submit); card.append(form);
   }
   const reviews = Array.isArray(a.solicitudesRevisionNota) ? a.solicitudesRevisionNota : [];
   if (reviews.length) {
@@ -134,6 +135,7 @@ function render() {
    card.append(reviewBox);
   }
   if (state.role === 'estudiante' && a.evaluacionTutor?.calificacion !== null && a.evaluacionTutor?.calificacion !== undefined) {
+   const result = el('section'); result.className = 'evidence-item'; result.append(el('h3', 'Mi calificación'), el('strong', Number(a.evaluacionTutor.calificacion).toFixed(1) + ' / 5')); if (a.evaluacionTutor.observaciones) result.append(el('p', 'Retroalimentación del docente: ' + a.evaluacionTutor.observaciones)); card.append(result);
    const pendingReview = reviews.some((review) => review.estado === 'pendiente');
    const reviewForm = el('form', ''); reviewForm.className = 'grade-review-request'; reviewForm.dataset.activity = a._id;
    reviewForm.append(el('h3', 'Solicitar revisión de mi nota'));
@@ -153,7 +155,7 @@ function render() {
    const scoreLabel = el('label', 'Nota de la actividad (0 a 5)'); const score = el('input'); score.type = 'number'; score.name = 'calificacion'; score.min = '0'; score.max = '5'; score.step = '0.1'; score.required = true; score.value = a.evaluacionTutor?.calificacion ?? '';
    const observationLabel = el('label', 'Observaciones'); const observation = el('textarea'); observation.name = 'observaciones'; observation.rows = 2; observation.maxLength = 2000; observation.placeholder = 'Retroalimentación para el estudiante…'; observation.value = a.evaluacionTutor?.observaciones || '';
    const submit = el('button', a.evaluacionTutor?.evaluadoEn ? 'Actualizar calificación' : 'Guardar calificación'); submit.type = 'submit'; submit.className = 'btn btn-primario btn-sm';
-   form.append(scoreLabel, score, observationLabel, observation, submit); card.append(form);
+   score.id = 'teacher-score-' + a._id; scoreLabel.htmlFor = score.id; observation.id = 'teacher-note-' + a._id; observationLabel.htmlFor = observation.id; form.append(scoreLabel, score, observationLabel, observation, submit); card.append(form);
   }
   const evidenceArea = el('div', ''); evidenceArea.className = 'evidence-list'; evidenceArea.id = 'evidence-' + a._id; card.append(evidenceArea);
   return card;
@@ -179,11 +181,12 @@ async function showEvidences(activityId) {
    const details = el('p', 'Entregada: ' + new Date(item.createdAt).toLocaleString('es-CO') + ' · ' + (item.estudiante?.nombre || 'Estudiante'));
    const download = el('a', 'Descargar archivo'); download.href = '/api/organization/evidences/' + encodeURIComponent(item._id) + '/download'; download.className = 'evidence-download';
    box.append(header, details, download);
+   if (item.mimeType === 'application/pdf') { const view = el('a', 'Ver PDF en navegador'); view.href = '/pdf-viewer.html?file=' + encodeURIComponent(new URL(download.href).pathname); view.target = '_blank'; view.rel = 'noopener'; box.append(view); }
    if (item.observacionTutor) box.append(el('p', 'Observación: ' + item.observacionTutor));
    if (state.role !== 'estudiante') {
     const form = el('form', ''); form.className = 'evidence-review'; form.dataset.evidence = item._id;
-    const select = el('select', ''); select.name = 'estado'; select.add(new Option('Aprobar evidencia', 'aprobada')); select.add(new Option('Solicitar correcciones', 'requiere_cambios')); select.value = item.estado === 'requiere_cambios' ? 'requiere_cambios' : 'aprobada';
-    const note = el('textarea', ''); note.name = 'observacion'; note.rows = 2; note.maxLength = 2000; note.placeholder = 'Observaciones para el estudiante…'; note.value = item.observacionTutor || '';
+    const select = el('select', ''); select.name = 'estado'; select.setAttribute('aria-label', 'Resultado de la revisión'); select.add(new Option('Aprobar evidencia', 'aprobada')); select.add(new Option('Solicitar correcciones', 'requiere_cambios')); select.value = item.estado === 'requiere_cambios' ? 'requiere_cambios' : 'aprobada';
+    const note = el('textarea', ''); note.name = 'observacion'; note.setAttribute('aria-label', 'Observaciones para el estudiante'); note.rows = 2; note.maxLength = 2000; note.placeholder = 'Observaciones para el estudiante…'; note.value = item.observacionTutor || '';
     const submit = el('button', 'Guardar revisión'); submit.type = 'submit'; submit.className = 'btn btn-primario btn-sm';
     form.append(select, note, submit); box.append(form);
    }
@@ -290,6 +293,7 @@ $('#btn-logout').addEventListener('click', async () => { try { await mutate('/ap
   const orgs = await api('/api/auth/organizations'); state.role = orgs.organizacionActiva?.role || null;
   if (!state.role) { notify('Selecciona una organización activa para consultar las actividades.', true); return; }
   if (state.role === 'administrador') $('#admin-link').hidden = false; if (state.role !== 'estudiante') $('#btn-nueva').hidden = false;
+  if (state.role === 'estudiante') $('.panel-sub').textContent = 'Consulta las instrucciones, envía tus tareas y revisa tus entregas, observaciones y calificaciones.';
   await loadPractices(); if (state.role === 'estudiante') $('#a-practica').disabled = true; $('#a-modulo').disabled = true; await load();
  } catch (error) { notify(error.message, true); }
 })();

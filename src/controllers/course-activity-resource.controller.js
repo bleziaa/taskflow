@@ -1,3 +1,4 @@
+const documentFilename = require('../utils/document-filename');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -49,7 +50,7 @@ const subir = asyncHandler(async (req, res) => {
     const resourceId = id();
     await pool.execute(
       'INSERT INTO academic_course_activity_resources (id, organization_id, course_id, activity_id, title, description, original_name, stored_name, mime_type, file_size_bytes, uploaded_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [resourceId, orgId, req.params.courseId, req.params.activityId, title, description, path.basename(req.file.originalname).replace(/[\\r\\n\\"]/g, '_').slice(0, 180), path.basename(req.file.filename), 'application/pdf', req.file.size, userId]
+      [resourceId, orgId, req.params.courseId, req.params.activityId, title, description, documentFilename(req.file.originalname), path.basename(req.file.filename), 'application/pdf', req.file.size, userId]
     );
     keep = true;
     res.status(201).json({ ok: true, data: { resource: { id: resourceId, title, description } } });
@@ -70,6 +71,10 @@ const descargar = asyncHandler(async (req, res) => {
   const full = path.resolve(STORAGE_DIR, stored);
   if (path.dirname(full) !== path.resolve(STORAGE_DIR)) throw new ApiError(404, 'Archivo no encontrado.', { code: 'FILE_NOT_FOUND' });
   try { await fs.access(full); } catch { throw new ApiError(404, 'El PDF ya no está disponible.', { code: 'FILE_NOT_FOUND' }); }
+  if (req.query.view === '1') {
+    res.type('pdf'); res.setHeader('Content-Disposition', 'inline');
+    return res.sendFile(full);
+  }
   res.download(full, rows[0].original_name, { headers: { 'Content-Type': 'application/pdf', 'X-Content-Type-Options': 'nosniff' } });
 });
 

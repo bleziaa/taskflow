@@ -1,3 +1,4 @@
+const documentFilename = require('../utils/document-filename');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const Activity = require('../models/Activity');
@@ -145,7 +146,7 @@ const subirRecurso = asyncHandler(async (req, res) => {
     if (req.user.role === 'estudiante') throw new ApiError(403, 'Solo el docente puede adjuntar el material de la actividad.', { code: 'FORBIDDEN' });
     if (['finalizada', 'suspendida'].includes(practica.estado)) throw new ApiError(409, 'La práctica está cerrada y no admite cambios.', { code: 'PRACTICE_CLOSED' });
     const previous = actividad.recurso?.nombreAlmacenado;
-    actividad.recurso = { nombreOriginal: path.basename(req.file.originalname).replace(/[\r\n\"]/g, '_').slice(0, 180), nombreAlmacenado: req.file.filename, mimeType: 'application/pdf', tamano: req.file.size };
+    actividad.recurso = { nombreOriginal: documentFilename(req.file.originalname), nombreAlmacenado: req.file.filename, mimeType: 'application/pdf', tamano: req.file.size };
     await actividad.save(); conservar = true;
     if (previous && previous !== req.file.filename) await fs.unlink(path.resolve(STORAGE_DIR, previous)).catch(() => {});
     res.status(201).json({ ok: true, data: { recurso: actividad.recurso } });
@@ -160,6 +161,10 @@ const descargarRecurso = asyncHandler(async (req, res) => {
   const filePath = path.resolve(STORAGE_DIR, recurso.nombreAlmacenado);
   if (path.dirname(filePath) !== path.resolve(STORAGE_DIR)) throw new ApiError(404, 'Archivo no encontrado.', { code: 'FILE_NOT_FOUND' });
   try { await fs.access(filePath); } catch { throw new ApiError(404, 'El PDF ya no está disponible.', { code: 'FILE_NOT_FOUND' }); }
+  if (req.query.view === '1') {
+    res.type('pdf'); res.setHeader('Content-Disposition', 'inline');
+    return res.sendFile(filePath);
+  }
   res.download(filePath, recurso.nombreOriginal, { headers: { 'Content-Type': 'application/pdf', 'X-Content-Type-Options': 'nosniff' } });
 });
 

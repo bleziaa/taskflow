@@ -38,6 +38,8 @@ function crearApp({ sessionStore } = {}) {
   app.use('/media/branding', express.static(RUTA_BRANDING, { fallthrough: false, immutable: true, maxAge: '1y', dotfiles: 'deny', index: false }));
   // Reglas compartidas entre frontend y backend; solo se publica este directorio dedicado.
   app.use('/shared', express.static(RUTA_COMPARTIDA, { fallthrough: true, dotfiles: 'deny', index: false, maxAge: env.nodeEnv === 'production' ? '1h' : 0 }));
+  app.use('/vendor/pdfjs', express.static(path.join(path.dirname(require.resolve('pdfjs-dist/package.json')), 'build'), { index: false, dotfiles: 'deny' }));
+  app.use('/vendor/pdfjs-fonts', express.static(path.join(path.dirname(require.resolve('pdfjs-dist/package.json')), 'standard_fonts'), { index: false, dotfiles: 'deny' }));
   app.use('/api/health', healthRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/organization', requireAuth, organizationContextRoutes);

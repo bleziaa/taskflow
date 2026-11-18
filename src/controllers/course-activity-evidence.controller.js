@@ -1,3 +1,4 @@
+const documentFilename = require('../utils/document-filename');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -37,7 +38,8 @@ async function checkFile(file) {
   try {
     const b = Buffer.alloc(8); const { bytesRead } = await handle.read(b, 0, 8, 0);
     if (ext === '.pdf') return bytesRead >= 5 && b.subarray(0, 5).toString() === '%PDF-';
-    return bytesRead >= 4 && b[0] === 0x50 && b[1] === 0x4b;
+    if (ext === '.doc') return bytesRead === 8 && b.equals(Buffer.from('d0cf11e0a1b11ae1', 'hex'));
+    return ext === '.docx' && bytesRead >= 4 && b[0] === 0x50 && b[1] === 0x4b;
   } finally { await handle.close(); }
 }
 const subir = asyncHandler(async (req, res) => {
@@ -67,7 +69,7 @@ const subir = asyncHandler(async (req, res) => {
       );
     }
     const evidenceId = newId();
-    const original = path.basename(req.file.originalname).replace(/[\\r\\n\\"]/g, '_').slice(0, 180);
+    const original = documentFilename(req.file.originalname);
     const [deadlineRows] = await connection.execute('SELECT due_at FROM academic_course_activity_student_deadlines WHERE organization_id=? AND activity_id=? AND student_id=? LIMIT 1', [ctx.orgId, ctx.activity.id, ctx.studentId]);
     const effectiveDueAt = deadlineRows[0]?.due_at || ctx.activity.due_at;
     const isLate = effectiveDueAt ? new Date() > new Date(effectiveDueAt) : false;
@@ -201,11 +203,8 @@ const descargar = asyncHandler(async (req, res) => {
   const full = path.resolve(STORAGE_DIR, stored);
   if (path.dirname(full) !== path.resolve(STORAGE_DIR)) throw new ApiError(404, 'Archivo no encontrado.', { code: 'FILE_NOT_FOUND' });
   try { await fs.access(full); } catch { throw new ApiError(404, 'El archivo ya no está disponible.', { code: 'FILE_NOT_FOUND' }); }
-  if (req.query.view === '1') {
-    const safeName = String(rows[0].original_name || 'entrega').replace(/[\\r\\n\"\\\\]/g, '_');
-    res.setHeader('Content-Type', rows[0].mime_type || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `inline; filename=\"${safeName}\"`);
-    res.setHeader('X-Content-Type-Options', 'nosniff');
+  if (req.query.view === '1' && rows[0].mime_type === 'application/pdf') {
+    res.type('pdf'); res.setHeader('Content-Disposition', 'inline');
     return res.sendFile(full);
   }
   res.download(full, rows[0].original_name, { headers: { 'X-Content-Type-Options': 'nosniff' } });

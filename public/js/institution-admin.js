@@ -91,7 +91,7 @@
       actions.append(action('Editar','edit-student',s._id),action('Eliminar','delete-student',s._id));
       card.append(actions); cards.append(card);
     });
-    $('#kpi-students').textContent = state.students.length;
+    $('#kpi-students').textContent = (state.studentTotal ?? state.students.length);
   }
   function renderCompanies() {
     const q = $('#search-companies').value.trim().toLocaleLowerCase('es');
@@ -219,7 +219,7 @@
       api('/api/organization/students'),api('/api/organization/companies'),
       api('/api/organization/tutors'),api('/api/organization/courses/manage')
     ]);
-    state.students=students.estudiantes||[]; state.companies=companies.empresas||[];
+    state.studentTotal=students.total; state.students=students.estudiantes||[]; state.companies=companies.empresas||[];
     state.tutors=tutors.usuarios||[]; state.courses=courses.courses||[];
     fillSelect($('#student-company'),state.companies.filter(c=>c.estado!=='inactiva'),c=>c.razonSocial);
     fillSelect($('#student-tutor'),state.tutors,t=>t.nombre+' · '+t.email);
@@ -329,12 +329,14 @@
         Object.entries({...student,empresa:student.empresa?._id||'',tutor:student.tutor?._id||''}).forEach(([key,value])=>{
           const field=form.elements.namedItem(key); if(field)field.value=value??'';
         });
+        form.elements.namedItem('id').value=student._id;
         fillSelect($('#student-company'),state.companies.filter(c=>c.estado!=='inactiva'),c=>c.razonSocial,student.empresa?._id||'');
         fillSelect($('#student-tutor'),state.tutors,t=>t.nombre+' · '+t.email,student.tutor?._id||'');
       } else if(button.dataset.action==='edit-company'){
         const company=state.companies.find(item=>item._id===id); if(!company)return;
         const form=$('#company-form'); openForm(form,'#company-form-title','Editar empresa'); clearFieldErrors(form); $('#company-form-feedback').hidden=true;
         Object.entries(company).forEach(([key,value])=>{const field=form.elements.namedItem(key);if(field)field.value=value??'';});
+        form.elements.namedItem('id').value=company._id;
       } else if(button.dataset.action==='delete-student'){
         if(!confirm('¿Eliminar el registro? Si tiene historial de prácticas, TaskFlow impedirá borrarlo para conservar la trazabilidad.'))return;
         await mutate('/api/organization/students/'+encodeURIComponent(id),'DELETE'); await loadAll(); notify('Registro eliminado.','success');

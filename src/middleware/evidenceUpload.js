@@ -8,7 +8,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const TIPOS = {
   '.pdf': ['application/pdf'],
   '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-  '.zip': ['application/zip', 'application/x-zip-compressed'],
+  '.doc': ['application/msword'],
 };
 const STORAGE_DIR = process.env.NODE_ENV === 'test' ? path.join(os.tmpdir(), 'taskflow-evidences-test') : path.resolve(__dirname, '..', '..', 'storage', 'evidences');
 fs.mkdirSync(STORAGE_DIR, { recursive: true });
@@ -21,7 +21,7 @@ const upload = multer({
   fileFilter: (_req, file, callback) => {
     const ext = path.extname(file.originalname || '').toLowerCase();
     const allowed = TIPOS[ext];
-    if (!allowed || !allowed.includes(file.mimetype)) return callback(new ApiError(415, 'Formato no permitido. Adjunta un PDF, DOCX o ZIP válido.', { code: 'FILE_TYPE_NOT_ALLOWED' }));
+    if (!allowed || !allowed.includes(file.mimetype)) return callback(new ApiError(415, 'Formato no permitido. Adjunta un PDF, DOC o DOCX válido.', { code: 'FILE_TYPE_NOT_ALLOWED' }));
     callback(null, true);
   },
 }).single('archivo');

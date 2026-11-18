@@ -80,3 +80,5 @@ body:has(#form-activity) .dashboard > .panel { padding:clamp(18px,3vw,32px); bac
  .evidence-review textarea { grid-column:auto; }
  .activity-actions .btn,.evidence-upload .btn,.evidence-review .btn { width:100%; }
 }
+
+.evidence-item > a,.student-delivery-status > a,.activity-card > a { display:inline-flex; padding:10px 14px; margin:8px 10px 8px 0; border:1px solid var(--borde-suave); border-radius:8px; color:var(--texto-principal); text-decoration:underline; }

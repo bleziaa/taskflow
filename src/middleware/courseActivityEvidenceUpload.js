@@ -6,7 +6,7 @@ const ApiError = require('../utils/ApiError');
 const MAX_BYTES = 10 * 1024 * 1024;
 const STORAGE_DIR = path.resolve(__dirname, '..', '..', 'storage', 'course-activity-evidences');
 fs.mkdirSync(STORAGE_DIR, { recursive: true });
-const allowed = new Set(['.pdf', '.docx', '.zip']);
+const allowed = new Set(['.pdf', '.doc', '.docx']);
 const upload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, STORAGE_DIR),
@@ -17,8 +17,8 @@ const upload = multer({
     const ext = path.extname(file.originalname || '').toLowerCase();
     const valid = (ext === '.pdf' && file.mimetype === 'application/pdf') ||
       (ext === '.docx' && file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') ||
-      (ext === '.zip' && ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'].includes(file.mimetype));
-    if (!allowed.has(ext) || !valid) return cb(new ApiError(415, 'Adjunta un PDF, DOCX o ZIP válido.', { code: 'EVIDENCE_TYPE_NOT_ALLOWED' }));
+      (ext === '.doc' && file.mimetype === 'application/msword');
+    if (!allowed.has(ext) || !valid) return cb(new ApiError(415, 'Adjunta un PDF, DOC o DOCX válido.', { code: 'EVIDENCE_TYPE_NOT_ALLOWED' }));
     cb(null, true);
   }
 }).single('archivo');

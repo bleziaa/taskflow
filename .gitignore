@@ -44,3 +44,7 @@ backups/
 # Credenciales y respaldos locales de bases de datos
 atlas-credentials.env
 .env.backup-*
+
+# Auditorías locales y copias del editor
+/work/
+*.before-refresh.bak

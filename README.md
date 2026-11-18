@@ -4,7 +4,7 @@ Sistema web para el control y seguimiento de prácticas empresariales.
 
 ## Requisitos
 
-- Node.js 20 o superior.
+- Node.js 20.16 o superior (requerido por el visor PDF).
 - npm.
 - Acceso a las bases de datos configuradas para el entorno que se vaya a utilizar.
 

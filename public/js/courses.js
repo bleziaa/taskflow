@@ -124,7 +124,8 @@
       const link = el('a', 'Descargar PDF');
       link.href = resource.downloadUrl;
       link.setAttribute('download', resource.fileName || 'material.pdf');
-      row.append(info, link);
+      const view = el('a', 'Ver PDF en navegador'); view.href = '/pdf-viewer.html?file=' + encodeURIComponent(resource.downloadUrl); view.target = '_blank'; view.rel = 'noopener';
+      row.append(info, view, link);
       resourceList.append(row);
     });
     materials.append(resourceList);
@@ -168,16 +169,16 @@
       const delivery = el('section', null, 'course-evidence-submit');
       delivery.append(el('b', 'Mi entrega'));
       const form = el('form', null, 'course-evidence-form'); form.hidden = true;
-      const file = el('input'); file.type = 'file'; file.required = true; file.accept = '.pdf,.docx,.zip,application/pdf,application/zip,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      const file = el('input'); file.type = 'file'; file.setAttribute('aria-label', 'Adjuntar entrega PDF, DOC o DOCX, máximo 10 MB'); file.required = true; file.accept = '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       const button = el('button', 'Enviar actividad', 'btn btn-primario btn-sm'); button.type = 'submit';
-      form.append(file, button);
+      form.append(el('p', 'Adjunta un PDF, DOC o DOCX · máximo 10 MB.'), file, button);
       form.addEventListener('submit', async event => {
         event.preventDefault();
         const selected = file.files && file.files[0];
         if (!selected) return;
         if (selected.size > 10 * 1024 * 1024) { note('La evidencia no puede superar los 10 MB.', 'error'); return; }
         const ext = selected.name.split('.').pop().toLowerCase();
-        if (!['pdf', 'docx', 'zip'].includes(ext)) { note('Adjunta un PDF, DOCX o ZIP.', 'error'); return; }
+        if (!['pdf', 'doc', 'docx'].includes(ext)) { note('Adjunta un PDF, DOC o DOCX.', 'error'); return; }
         button.disabled = true;
         try {
           const token = (await api('/api/auth/csrf-token')).csrfToken;
@@ -232,7 +233,7 @@
           }
           const statusText = evidence.status === 'aprobada' ? 'Actividad aprobada' : evidence.status === 'reprobada' ? 'Actividad reprobada · Perdida' : needsCorrection ? 'Entrega requiere correcciones' : withdrawn ? 'Entrega retirada' : 'Ya enviada · Pendiente de revisión';
           myStatus.append(el('b', statusText), el('small', evidence.originalName + ' · ' + formatDate(evidence.submittedAt) + (evidence.late ? ' · Entrega tardía' : '')));
-          if (evidence.downloadUrl && !withdrawn) { const download = el('a', 'Descargar mi entrega'); download.href = evidence.downloadUrl; download.className = 'course-evidence-download'; myStatus.append(download); }
+          if (evidence.downloadUrl && !withdrawn) { const download = el('a', 'Descargar mi entrega'); download.href = evidence.downloadUrl; download.className = 'course-evidence-download'; myStatus.append(download); if (evidence.mimeType === 'application/pdf') { const view = el('a', 'Ver mi PDF'); view.href = '/pdf-viewer.html?file=' + encodeURIComponent(evidence.downloadUrl); view.target = '_blank'; view.rel = 'noopener'; myStatus.append(view); } }
           if (canEditSubmission) {
             const withdraw = el('button', 'Eliminar entrega y volver a subir', 'btn btn-secundario btn-sm');
             withdraw.type = 'button';
@@ -316,7 +317,7 @@
             renderIndividualDeadline(course, activity, evidence, card);
             const evidenceUrl = evidence.downloadUrl || ('/api/organization/courses/' + course.id + '/activities/' + activity.id + '/evidences/' + evidence.id + '/download');
             if (String(evidence.mimeType || '').toLowerCase() === 'application/pdf' || /\.pdf$/i.test(evidence.originalName || '')) {
-              const view = el('a', 'Ver entrega'); view.href = evidenceUrl + '?view=1'; view.target = '_blank'; view.rel = 'noopener noreferrer'; card.append(view);
+              const view = el('a', 'Ver entrega'); view.href = '/pdf-viewer.html?file=' + encodeURIComponent(evidenceUrl); view.target = '_blank'; view.rel = 'noopener noreferrer'; card.append(view);
             }
             const download = el('a', 'Descargar entrega'); download.href = evidenceUrl; download.setAttribute('download', evidence.originalName || 'entrega'); card.append(download);
             const review = el('div', null, 'course-evidence-review-form');
@@ -595,7 +596,8 @@
       const row = el('div', null, 'course-resource'); const info = el('div');
       info.append(el('b', resource.title), el('small', (resource.description || '') + ' · ' + (resource.sizeBytes / 1024).toFixed(1) + ' KB'));
       const link = el('a', 'Descargar PDF'); link.href = resource.downloadUrl; link.setAttribute('download', resource.fileName);
-      row.append(info, link); resources.append(row);
+      const view = el('a', 'Ver PDF en navegador'); view.href = '/pdf-viewer.html?file=' + encodeURIComponent(resource.downloadUrl); view.target = '_blank'; view.rel = 'noopener';
+      row.append(info, view, link); resources.append(row);
     });
     resourceSection.append(resources); workspace.append(resourceSection);
   }

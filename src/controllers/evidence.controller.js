@@ -1,3 +1,4 @@
+const documentFilename = require('../utils/document-filename');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const Activity = require('../models/Activity');
@@ -27,7 +28,8 @@ async function comprobarFirma(file) {
     const buffer = Buffer.alloc(8); const { bytesRead } = await handle.read(buffer, 0, 8, 0);
     const ext = path.extname(file.originalname).toLowerCase();
     if (ext === '.pdf' && (bytesRead < 5 || buffer.subarray(0, 5).toString() !== '%PDF-')) return false;
-    if (['.docx', '.zip'].includes(ext) && (bytesRead < 4 || buffer[0] !== 0x50 || buffer[1] !== 0x4b)) return false;
+    if (ext === '.docx' && (bytesRead < 4 || buffer[0] !== 0x50 || buffer[1] !== 0x4b)) return false;
+    if (ext === '.doc' && !buffer.equals(Buffer.from('d0cf11e0a1b11ae1', 'hex'))) return false;
     return true;
   } finally { await handle.close(); }
 }
@@ -43,7 +45,7 @@ const subir = asyncHandler(async (req, res) => {
     if (!await comprobarFirma(req.file)) throw new ApiError(415, 'El contenido del archivo no coincide con su formato.', { code: 'FILE_SIGNATURE_INVALID' });
     const latestEvidence = await Evidence.findOne({ actividad: actividad._id, estudiante: student._id, ...(req.organization ? { organizationId: req.organization._id } : {}) }).sort({ createdAt: -1, _id: -1 });
     if (latestEvidence && latestEvidence.estado !== 'requiere_cambios') throw new ApiError(409, 'Esta actividad ya fue enviada. Solo podrás subir otro archivo si el docente solicita correcciones.', { code: 'EVIDENCE_ALREADY_SUBMITTED' });
-    const original = path.basename(req.file.originalname).replace(/[\r\n"]/g, '_').slice(0, 180);
+    const original = documentFilename(req.file.originalname);
     const evidencia = await Evidence.create({ actividad: actividad._id, estudiante: student._id, nombreOriginal: original, nombreAlmacenado: req.file.filename, mimeType: req.file.mimetype, tamano: req.file.size, ...(req.organization ? { organizationId: req.organization._id } : {}) });
     evidenciaId = evidencia._id;
     actividad.estado = 'en_revision'; await actividad.save(); conservar = true;
@@ -81,7 +83,11 @@ const descargar = asyncHandler(async (req, res) => {
   const filePath = path.resolve(STORAGE_DIR, evidencia.nombreAlmacenado);
   if (path.dirname(filePath) !== path.resolve(STORAGE_DIR)) throw new ApiError(404, 'Archivo no encontrado.', { code: 'FILE_NOT_FOUND' });
   try { await fs.access(filePath); } catch { throw new ApiError(404, 'El archivo ya no está disponible.', { code: 'FILE_NOT_FOUND' }); }
-  res.download(filePath, evidencia.nombreOriginal, { headers: { 'Content-Type': evidencia.mimeType } });
+  if (req.query.view === '1' && evidencia.mimeType === 'application/pdf') {
+    res.type('pdf'); res.setHeader('Content-Disposition', 'inline');
+    return res.sendFile(filePath);
+  }
+  res.download(filePath, evidencia.nombreOriginal, { headers: { 'Content-Type': evidencia.mimeType, 'X-Content-Type-Options': 'nosniff' } });
 });
 const revisar = asyncHandler(async (req, res) => {
   const { evidencia, practica } = await obtenerEvidenciaAccesible(req, req.params.id);

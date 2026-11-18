@@ -184,6 +184,7 @@ const descargarRecurso = asyncHandler(async (req, res, next) => {
   if (!fullPath.startsWith(STORAGE + path.sep) || !fs.existsSync(fullPath)) {
     throw new ApiError(404, 'El archivo no está disponible en el almacenamiento.', { code: 'RESOURCE_FILE_MISSING' });
   }
+  if (req.query.view === '1') { res.type('pdf'); res.setHeader('Content-Disposition', 'inline'); return res.sendFile(fullPath); }
   res.download(fullPath, rows[0].original_name, error => {
     if (error && !res.headersSent) next(error);
   });
