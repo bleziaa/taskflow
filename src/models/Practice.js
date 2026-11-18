@@ -24,6 +24,8 @@ const practiceSchema = new mongoose.Schema({
   fechaInicio: { type: Date, required: true },
   fechaFin: { type: Date, required: true },
   estado: { type: String, enum: ['planificada', 'en_curso', 'finalizada', 'suspendida'], default: 'planificada' },
+  horario: { dias: { type: [Number], default: [] }, entrada: { type: String, default: '' }, salida: { type: String, default: '' }, descansoMinutos: { type: Number, default: 0 } },
+  horasRequeridas: { type: Number, min: 0, max: 10000, default: 0 },
   observaciones: { type: String, trim: true, default: '', maxlength: 2000 },
   estructuraAcademica: { type: [moduloAcademicoSchema], default: [] },
   historialEstructuraAcademica: { type: [historialEstructuraSchema], default: [] },

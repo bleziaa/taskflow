@@ -10,7 +10,7 @@ async function iniciar() {
 
   await conectarDB();
   await conectarMySQL();
-  await User.init();
+  await Promise.all([User.init(), require('./models/PracticeAttendance').init()]);
   const estudiantesMigrados = await User.updateMany({ role: 'user' }, { $set: { role: 'estudiante' } });
   const administradoresMigrados = await User.updateMany({ role: 'admin' }, { $set: { role: 'administrador' } });
   if (estudiantesMigrados.modifiedCount || administradoresMigrados.modifiedCount) {

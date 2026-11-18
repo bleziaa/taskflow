@@ -10,7 +10,7 @@ function escaparHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
-async function enviarCredenciales({ nombre, email, passwordTemporal, organizacion, url }) {
+async function enviarCredenciales({ nombre, email, passwordTemporal, organizacion, url, esPrueba = false }) {
   if (!configuracionCompleta()) return { status: 'not_configured' };
   const s = env.smtp;
   const transporter = nodemailer.createTransport({
@@ -23,14 +23,15 @@ async function enviarCredenciales({ nombre, email, passwordTemporal, organizacio
     socketTimeout: 15000,
   });
   try {
-    await transporter.sendMail({
+    const resultado = await transporter.sendMail({
       from: s.from,
       to: email,
-      subject: 'Tu acceso a TaskFlow',
-      text: `Hola ${nombre},\n\nSe creó tu cuenta de TaskFlow para ${organizacion}.\nCorreo: ${email}\nContraseña temporal: ${passwordTemporal}\n\nEnlace de acceso: ${url}\n\nInicia sesión y cambia esta contraseña antes de continuar. No compartas estas credenciales.`,
-      html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#24212d"><h1>Bienvenido a TaskFlow</h1><p>Hola ${escaparHtml(nombre)},</p><p>Se creó tu cuenta para <strong>${escaparHtml(organizacion)}</strong>.</p><p><strong>Correo:</strong> ${escaparHtml(email)}</p><p><strong>Contraseña temporal:</strong></p><p style="padding:14px;background:#f3f1f7;border-radius:8px;font-family:monospace;word-break:break-all">${escaparHtml(passwordTemporal)}</p><p><strong>Enlace para ingresar:</strong> <a href="${escaparHtml(url)}">Abrir TaskFlow</a></p><p>Al iniciar sesión, TaskFlow te solicitará cambiar esta contraseña antes de continuar.</p><p>Por seguridad, no compartas este mensaje ni tus credenciales.</p></div>`,
+      subject: esPrueba ? 'Prueba de bienvenida de TaskFlow — sin cuenta real' : 'Tu acceso a TaskFlow',
+      text: `${esPrueba ? 'MENSAJE DE PRUEBA: no se creó una cuenta real. La contraseña mostrada es ficticia.\n\n' : ''}Hola ${nombre},\n\nSe creó tu cuenta de TaskFlow para ${organizacion}.\nCorreo: ${email}\nContraseña temporal: ${passwordTemporal}\n\nEnlace de acceso: ${url}\n\nInicia sesión y cambia esta contraseña antes de continuar. No compartas estas credenciales.`,
+      html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#24212d">${esPrueba ? '<p><strong>MENSAJE DE PRUEBA: no se creó una cuenta real. La contraseña mostrada es ficticia.</strong></p>' : ''}<h1>Bienvenido a TaskFlow</h1><p>Hola ${escaparHtml(nombre)},</p><p>Se creó tu cuenta para <strong>${escaparHtml(organizacion)}</strong>.</p><p><strong>Correo:</strong> ${escaparHtml(email)}</p><p><strong>Contraseña temporal:</strong></p><p style="padding:14px;background:#f3f1f7;border-radius:8px;font-family:monospace;word-break:break-all">${escaparHtml(passwordTemporal)}</p><p><strong>Enlace para ingresar:</strong> <a href="${escaparHtml(url)}">Abrir TaskFlow</a></p><p>Al iniciar sesión, TaskFlow te solicitará cambiar esta contraseña antes de continuar.</p><p>Por seguridad, no compartas este mensaje ni tus credenciales.</p></div>`,
     });
-    return { status: 'sent' };
+    const aceptado = (resultado.accepted || []).some(recipient => String(typeof recipient === 'string' ? recipient : recipient.address).toLowerCase() === email.toLowerCase());
+    return { status: aceptado ? 'sent' : 'failed' };
   } catch (error) {
     // No registrar credenciales ni contenido del mensaje.
     console.error('[email] No se pudo enviar el correo de alta:', error.code || error.name || 'SMTP_ERROR');

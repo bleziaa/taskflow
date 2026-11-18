@@ -14,3 +14,22 @@
 .practice-objective { padding-top: .65rem; border-top: 1px solid var(--borde-suave); }
 .practice-actions { display: flex; gap: .5rem; margin-top: 1rem; }
 @media (max-width: 640px) { .practice-wide { grid-column: auto; } .practice-card-head { align-items: flex-start; } }
+
+.practice-hours { margin-top:20px;padding-top:18px;border-top:1px solid var(--borde-suave); }
+.practice-schedule-fields { margin:18px 0;padding:16px;border:1px solid var(--borde-suave);border-radius:10px;min-width:0; }
+.practice-day-options { display:flex;flex-wrap:wrap;gap:14px;padding:12px;border:0; }
+.practice-day-options label { display:flex;align-items:center;gap:8px; }
+.practice-hours-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px; }
+.practice-hours label { display:flex;flex-direction:column;gap:6px; }
+.practice-hours .practice-day-options label { flex-direction:row; }
+.practice-schedule-fields input,.practice-hours input,.practice-hours select,.practice-hours textarea { max-width:100%;padding:10px;font:inherit;background:var(--bg-tarjeta);color:var(--texto-principal);border:1px solid var(--borde-suave);border-radius:8px; }
+.practice-day-options input { width:18px;height:18px;min-height:0; }
+.practice-attendance-form,.practice-attendance-review { display:grid;gap:12px;padding:16px;margin:16px 0;background:var(--bg-sutil);border-radius:10px; }
+.practice-attendance-form h4,.practice-attendance-item h5 { margin:0;font-size:1.05rem; }
+.practice-attendance-item { border:1px solid var(--borde-suave);border-radius:10px;padding:16px;margin:12px 0;overflow-wrap:anywhere; }
+.practice-hours-help { font-size:.9rem;line-height:1.5; }
+.practice-hours-message:not(:empty) { padding:12px;border:1px solid var(--borde-suave);border-radius:8px; }
+.practice-hours-message.is-error { color:var(--error,#b42318); }
+.practice-hours details { margin:12px 0; }.practice-hours summary { cursor:pointer;padding:8px 0; }
+.practice-hours progress { width:100%;height:20px; }
+@media(max-width:640px){.practice-hours-grid{grid-template-columns:minmax(0,1fr)}.practice-hours .btn{max-width:100%;white-space:normal}}

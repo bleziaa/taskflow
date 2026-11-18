@@ -10,6 +10,7 @@ const FIELD_RULES = require('../../shared/field-rules');
 const estudiantes = require('../controllers/student.controller');
 const perfilEstudiante = require('../controllers/student-profile.controller');
 const empresas = require('../controllers/company.controller');
+const asistenciaPracticas = require('../controllers/practice-attendance.controller');
 const practicas = require('../controllers/practice.controller');
 const actividades = require('../controllers/activity.controller');
 const evidencias = require('../controllers/evidence.controller');
@@ -173,6 +174,10 @@ router.put('/practices/:id/academic-structure', requireOrganization('administrad
   body('modulos').isArray({ min: 1, max: 20 }).withMessage('La estructura debe contener entre 1 y 20 módulos.'),
   body('motivoCambio').optional().isString().isLength({ max: 500 }),
   validate, estructuraAcademica.guardarEstructura);
+router.get('/practices/:id/attendance', rolesAcademicos, practiceValidators.validarIdPractica, validate, asistenciaPracticas.listar);
+router.put('/practices/:id/attendance/:fecha', requireOrganization('estudiante'), protegerCsrf, practiceValidators.validarIdPractica, validate, asistenciaPracticas.registrar);
+router.patch('/practices/:id/attendance/:registroId/review', requireOrganization('administrador', 'tutor'), protegerCsrf, practiceValidators.validarIdPractica, param('registroId').isMongoId(), validate, asistenciaPracticas.revisar);
+router.put('/practices/:id/schedule', requireOrganization('administrador', 'tutor'), protegerCsrf, practiceValidators.validarIdPractica, validate, asistenciaPracticas.guardarHorario);
 router.get('/practices', rolesAcademicos, practicas.listarPracticas);
 router.get('/practices/:id', rolesAcademicos, practiceValidators.validarIdPractica, validate, practicas.obtenerPractica);
 router.post('/practices', requireOrganization('administrador', 'tutor'), protegerCsrf, practiceValidators.validarNuevaPractica, validate, practicas.crearPractica);

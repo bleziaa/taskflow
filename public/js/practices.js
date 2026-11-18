@@ -6,7 +6,7 @@
   const statusNames = { planificada: 'Planificada', en_curso: 'En curso', finalizada: 'Finalizada', suspendida: 'Suspendida' };
   function notify(text, error = false) {
     message.textContent = text;
-    message.className = 'form-mensaje ' + (error ? 'error' : 'exito');
+    message.className = 'form-mensaje mostrar ' + (error ? 'error' : 'exito');
   }
   async function api(url, options = {}) {
     const headers = { Accept: 'application/json', ...(options.headers || {}) };
@@ -63,7 +63,7 @@
       status.className = 'practice-status status-' + p.estado; head.append(title, status);
       const detail = node('p', 'Estudiante: ' + (p.estudiante?.nombre || '—') + ' · Tutor: ' + (p.tutor?.nombre || '—'));
       const company = node('p', 'Empresa: ' + (p.empresa?.razonSocial || '—') + (p.empresa?.ciudad ? ' · ' + p.empresa.ciudad : ''));
-      const dates = node('p', 'Periodo: ' + new Date(p.fechaInicio).toLocaleDateString('es-CO') + ' — ' + new Date(p.fechaFin).toLocaleDateString('es-CO'));
+      const dates = node('p', 'Periodo: ' + window.TaskFlowPracticeHours.fmtDate(p.fechaInicio) + ' — ' + window.TaskFlowPracticeHours.fmtDate(p.fechaFin));
       const objective = node('p', p.objetivo || 'Sin objetivo registrado.'); objective.className = 'practice-objective';
       card.append(head, detail, company, dates, objective);
       if (p.observaciones) card.append(node('p', 'Observaciones: ' + p.observaciones));
@@ -73,6 +73,7 @@
         const del = node('button', 'Eliminar'); del.type = 'button'; del.className = 'btn btn-secundario btn-sm'; del.dataset.action = 'delete'; del.dataset.id = p._id;
         actions.append(edit, del); card.append(actions);
       }
+      window.TaskFlowPracticeHours.attach(card,p,state.role,api,mutate);
       return card;
     }));
   }
@@ -82,6 +83,7 @@
     render();
   }
   function resetForm() {
+    $('#practice-schedule-fields').replaceChildren(window.TaskFlowPracticeHours.scheduleFields());
     $('#form-practice').reset(); $('#form-practice').elements.id.value = '';
     $('#practice-admin-form').hidden = true;
   }
@@ -96,6 +98,8 @@
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
     const id = data.id; delete data.id;
+    Object.keys(data).filter(key=>key.startsWith('schedule-')).forEach(key=>delete data[key]);
+    Object.assign(data,window.TaskFlowPracticeHours.readSchedule(form));
     if (new Date(data.fechaFin) < new Date(data.fechaInicio)) {
       notify('La fecha final no puede ser anterior a la fecha de inicio.', true); return;
     }
@@ -118,6 +122,7 @@
           estado: p.estado, objetivo: p.objetivo, observaciones: p.observaciones
         };
         Object.entries(values).forEach(([key, value]) => { if (form.elements.namedItem(key)) form.elements.namedItem(key).value = value || ''; });
+        $('#practice-schedule-fields').replaceChildren(window.TaskFlowPracticeHours.scheduleFields(p));
         $('#form-title').textContent = 'Editar práctica';
         $('#practice-admin-form').hidden = false;
         $('#practice-admin-form').scrollIntoView({ behavior: 'smooth', block: 'center' });

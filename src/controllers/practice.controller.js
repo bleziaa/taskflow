@@ -1,3 +1,5 @@
+const practiceHours = require('../utils/practice-hours');
+const PracticeAttendance = require('../models/PracticeAttendance');
 const Practice = require('../models/Practice');
 const Activity = require('../models/Activity');
 const Student = require('../models/Student');
@@ -7,7 +9,7 @@ const Membership = require('../models/OrganizationMembership');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 
-const CAMPOS = ['estudiante', 'empresa', 'tutor', 'titulo', 'objetivo', 'fechaInicio', 'fechaFin', 'estado', 'observaciones'];
+const CAMPOS = ['estudiante', 'empresa', 'tutor', 'titulo', 'objetivo', 'fechaInicio', 'fechaFin', 'estado', 'observaciones', 'horario', 'horasRequeridas'];
 const ESTADOS_ACTIVOS = ['planificada', 'en_curso'];
 
 function datosPermitidos(body) {
@@ -15,6 +17,8 @@ function datosPermitidos(body) {
   for (const campo of CAMPOS) {
     if (Object.prototype.hasOwnProperty.call(body, campo)) data[campo] = body[campo];
   }
+  if (Object.prototype.hasOwnProperty.call(data, 'horario')) data.horario = practiceHours.schedule(data.horario);
+  if (Object.prototype.hasOwnProperty.call(data, 'horasRequeridas')) data.horasRequeridas = practiceHours.requiredHours(data.horasRequeridas);
   return data;
 }
 
@@ -101,6 +105,13 @@ const actualizarPractica = asyncHandler(async (req, res) => {
   if (!actual) throw new ApiError(404, 'No se encontró la práctica.', { code: 'PRACTICE_NOT_FOUND' });
   const data = datosPermitidos(req.body);
   const relaciones = await validarRelaciones(data, actual, req.organization?._id || null);
+  const attendanceExists = await PracticeAttendance.exists({ practica: actual._id });
+  if (attendanceExists && data.estudiante && String(data.estudiante) !== String(actual.estudiante)) throw new ApiError(409, 'No puedes cambiar el estudiante de una práctica con jornadas registradas.', { code: 'PRACTICE_HAS_ATTENDANCE' });
+  if (attendanceExists && (data.fechaInicio || data.fechaFin)) {
+    const first = await PracticeAttendance.findOne({ practica: actual._id }).sort({ fecha: 1 }).select('fecha');
+    const last = await PracticeAttendance.findOne({ practica: actual._id }).sort({ fecha: -1 }).select('fecha');
+    if (first.fecha < new Date(data.fechaInicio || actual.fechaInicio).toISOString().slice(0,10) || last.fecha > new Date(data.fechaFin || actual.fechaFin).toISOString().slice(0,10)) throw new ApiError(409, 'El periodo debe conservar las fechas de las jornadas registradas.', { code: 'PRACTICE_HAS_ATTENDANCE' });
+  }
   const estadoNuevo = data.estado || actual.estado;
   const estudianteNuevo = data.estudiante || actual.estudiante;
   if (ESTADOS_ACTIVOS.includes(estadoNuevo)) {
@@ -129,6 +140,7 @@ const eliminarPractica = asyncHandler(async (req, res) => {
   const existente = await Practice.findOne({ _id: req.params.id, ...(req.organization ? { organizationId: req.organization._id } : {}) });
   if (!existente) throw new ApiError(404, 'No se encontró la práctica.', { code: 'PRACTICE_NOT_FOUND' });
   const tieneActividades = await Activity.exists({ practica: existente._id, ...(req.organization ? { organizationId: req.organization._id } : {}) });
+  if (await PracticeAttendance.exists({ practica: existente._id })) throw new ApiError(409, 'La práctica tiene jornadas registradas; conserva su historial.', { code: 'PRACTICE_HAS_ATTENDANCE' });
   if (tieneActividades) throw new ApiError(409, 'No se puede eliminar una práctica que ya tiene actividades; conserva su historial.', { code: 'PRACTICE_HAS_ACTIVITIES' });
   const practica = await Practice.findOneAndDelete({ _id: req.params.id, ...(req.organization ? { organizationId: req.organization._id } : {}) });
   const estudiante = await Student.findOne({ _id: practica.estudiante, ...(req.organization ? { organizationId: req.organization._id } : {}) });
