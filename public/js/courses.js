@@ -536,6 +536,21 @@
     heading.append(back, intro, metrics); workspace.append(heading);
 
     if (state.role === 'tutor') {
+      const roster = el('details', null, 'course-teacher-tools');
+      const rosterTitle = el('summary', 'Ver estudiantes matriculados');
+      const rosterContent = el('div'); roster.append(rosterTitle, rosterContent); workspace.append(roster);
+      roster.addEventListener('toggle', async () => {
+        if (!roster.open || roster.dataset.loaded) return;
+        rosterContent.textContent = 'Cargando matrícula…';
+        try {
+          const data = await api('/api/organization/courses/' + course.id + '/enrollments');
+          rosterContent.replaceChildren();
+          const students = data.enrollments.filter(e => e.status === 'activo');
+          if (!students.length) rosterContent.append(el('p', 'Todavía no hay estudiantes matriculados.'));
+          students.forEach(s => rosterContent.append(el('p', s.name + ' · ' + s.code)));
+          roster.dataset.loaded = 'true';
+        } catch (error) { rosterContent.textContent = error.message; }
+      });
       const teacherTools = el('div', null, 'course-teacher-tools course-teacher-tools-units');
       renderModuleEditor(course, teacherTools);
       workspace.append(teacherTools);

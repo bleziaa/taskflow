@@ -139,10 +139,68 @@
       const teachers = (course.teachers||[]).filter(item=>item.status==='activo').map(item=>item.user?.nombre||item.userId);
       card.append(node('p','Docentes: '+(teachers.join(', ')||'Sin asignar'),'institution-course-teachers'));
       const actions = node('div',null,'institution-course-actions');
-      actions.append(action('Editar estructura','edit-course',course.id));
+      actions.append(action('Editar estructura','edit-course',course.id), action('Gestionar matrícula','enroll-course',course.id));
       card.append(actions);
       root.append(card);
     });
+  }
+  async function openEnrollment(courseId) {
+    const course = state.courses.find(c => c.id === courseId);
+    if (!course) return;
+    const data = await api('/api/organization/courses/' + courseId + '/enrollments');
+    $('#courses-admin-list').querySelectorAll('.enrollment-editor').forEach(item => item.remove());
+    const panel = node('section', null, 'enrollment-editor institution-form');
+    panel.append(node('h3', 'Matrícula · ' + course.name), node('p', 'La administración asigna los estudiantes a cada materia. El tutor de prácticas se asigna por separado en la ficha del estudiante.'));
+    const feedback = node('p'); feedback.setAttribute('role', 'status'); panel.append(feedback);
+    if (course.status !== 'activo') panel.append(node('p', 'Activa el curso para gestionar su matrícula.'));
+    const active = new Set(data.enrollments.filter(e => e.status === 'activo').map(e => e.studentId));
+    const form = node('form', null, 'institution-form-grid');
+    const label = node('label', 'Estudiante para matricular');
+    const select = node('select'); select.required = true; select.setAttribute('aria-label', 'Estudiante para matricular'); select.disabled = course.status !== 'activo';
+    select.add(new Option('Selecciona un estudiante', ''));
+    data.candidates.filter(c => !active.has(c.id)).forEach(c => {
+      const option = new Option(c.name + ' · ' + c.code + (c.eligible ? '' : ' · Requiere cuenta activa'), c.id);
+      option.disabled = !c.eligible; select.add(option);
+    });
+    label.append(select); const add = node('button', 'Matricular estudiante', 'btn btn-primario'); add.type = 'submit'; add.disabled = course.status !== 'activo';
+    form.append(label, add); panel.append(form);
+    const help = node('p', 'Si un estudiante indica «Requiere cuenta activa», crea o vincula su usuario con membresía de estudiante antes de matricularlo.'); panel.append(help);
+    form.addEventListener('submit', async event => {
+      event.preventDefault(); if (!select.value) return; add.disabled = true;
+      try { await mutate('/api/organization/courses/' + courseId + '/enrollments', 'POST', { studentId: select.value }); await openEnrollment(courseId); notify('Estudiante matriculado. Ya puede ver la materia en Mis cursos.', 'success'); }
+      catch (error) { feedback.textContent = error.message; } finally { add.disabled = false; }
+    });
+    panel.append(node('h4', 'Estudiantes del curso (' + active.size + ' activos)'));
+    if (!data.enrollments.length) panel.append(node('p', 'Todavía no hay estudiantes matriculados.'));
+    data.enrollments.forEach(e => {
+      const row = node('div', null, 'institution-card');
+      row.append(node('strong', e.name + ' · ' + e.code), node('p', 'Estado: ' + e.status));
+      const button = node('button', e.status === 'activo' ? 'Retirar del curso' : 'Reactivar matrícula', 'btn btn-secundario btn-sm'); button.type = 'button'; button.disabled = course.status !== 'activo';
+      button.addEventListener('click', () => {
+        if (e.status !== 'activo') { change('activo'); return; }
+        if (row.querySelector('[data-confirm-withdrawal]')) return;
+        const confirm = node('div'); confirm.dataset.confirmWithdrawal = 'true';
+        confirm.append(node('p', 'Al retirar al estudiante dejará de ver esta materia. Sus entregas y notas se conservan; al reactivar recuperará el acceso.'));
+        const yes = node('button', 'Confirmar retiro', 'btn btn-secundario btn-sm'); yes.type = 'button'; yes.addEventListener('click', () => change('retirado'));
+        const no = node('button', 'Cancelar', 'btn btn-secundario btn-sm'); no.type = 'button'; no.addEventListener('click', () => confirm.remove());
+        confirm.append(yes, no); row.append(confirm);
+      });
+      async function change(status) {
+        button.disabled = true;
+        try { await mutate('/api/organization/courses/' + courseId + '/enrollments/' + e.studentId, 'PATCH', { status }); await openEnrollment(courseId); notify(status === 'activo' ? 'Matrícula reactivada.' : 'Estudiante retirado. Se conservan sus entregas y notas.', 'success'); }
+        catch (error) { feedback.textContent = error.message; } finally { button.disabled = false; }
+      }
+      row.append(button); panel.append(row);
+    });
+    if (data.history.length) {
+      const history = node('details'); history.append(node('summary', 'Historial de matrícula (últimos 100 cambios)'));
+      data.history.forEach(h => {
+        const student = data.enrollments.find(e => e.studentId === h.studentId);
+        history.append(node('p', (student?.name || h.studentId) + ' · ' + h.status + ' · ' + h.actorName + ' · ' + new Date(h.changedAt).toLocaleString('es-CO')));
+      }); panel.append(history);
+    }
+    const close = node('button', 'Cerrar matrícula', 'btn btn-secundario'); close.type = 'button'; close.addEventListener('click', () => panel.remove()); panel.append(close);
+    $('#courses-admin-list').append(panel); panel.scrollIntoView({ block: 'nearest' });
   }
   function openCourseEditor(courseId) {
     const course = state.courses.find(item => String(item.id) === String(courseId));
@@ -319,7 +377,9 @@
     const button=event.target.closest('[data-action]'); if(!button)return;
     const id=button.dataset.id;
     try {
-      if(button.dataset.action==='edit-course'){
+      if(button.dataset.action==='enroll-course'){
+        await openEnrollment(id);
+      } else if(button.dataset.action==='edit-course'){
         openCourseEditor(id);
       } else if(button.dataset.action==='edit-student'){
         const student=state.students.find(item=>item._id===id); if(!student)return;

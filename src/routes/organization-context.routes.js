@@ -23,6 +23,7 @@ const { subirRecursoCursoActividad } = require('../middleware/courseActivityReso
 const entregasCurso = require('../controllers/course-activity-evidence.controller');
 const { subirEvidenciaCurso } = require('../middleware/courseActivityEvidenceUpload');
 const gestionCursos = require('../controllers/course-management.controller');
+const matriculas = require('../controllers/course-enrollment.controller');
 const practiceValidators = require('../validators/practice.validators');
 const activityValidators = require('../validators/activity.validators');
 const evidenceValidators = require('../validators/evidence.validators');
@@ -63,6 +64,13 @@ const rolesCursos = requireOrganization('tutor', 'estudiante');
 const aiChatLimiter = rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false, message: { ok: false, error: { code: 'AI_RATE_LIMITED', message: 'Has enviado varias consultas. Espera un minuto y vuelve a intentarlo.' } } });
 router.get('/courses', rolesCursos, espaciosCurso.listarCursos);
 router.get('/courses/manage', requireOrganization('administrador'), gestionCursos.listarCursosAdministracion);
+router.get('/courses/:courseId/enrollments', requireOrganization('administrador', 'tutor'),
+  param('courseId').isMongoId(), validate, matriculas.listar);
+router.post('/courses/:courseId/enrollments', requireOrganization('administrador'), protegerCsrf,
+  param('courseId').isMongoId(), body('studentId').isMongoId(), validate, matriculas.matricular);
+router.patch('/courses/:courseId/enrollments/:studentId', requireOrganization('administrador'), protegerCsrf,
+  param('courseId').isMongoId(), param('studentId').isMongoId(),
+  body('status').isIn(['activo', 'retirado']), validate, matriculas.cambiarEstado);
 router.post('/courses', requireOrganization('administrador'), protegerCsrf,
   body('code').isString().trim().isLength({ min: 2, max: 40 }),
   body('name').isString().trim().isLength({ min: 2, max: 140 }),

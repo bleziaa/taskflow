@@ -13,7 +13,7 @@ async function poolForRequest() {
   return obtenerPoolMySQL();
 }
 
-async function courseForRequest(req, courseId, roles = ['administrador', 'tutor', 'estudiante']) {
+async function courseForRequest(req, courseId, roles = ['administrador', 'tutor', 'estudiante'], allowInactive = false) {
   if (!validId(courseId)) throw new ApiError(400, 'Identificador de curso inválido.', { code: 'INVALID_COURSE_ID' });
   const pool = await poolForRequest();
   const orgId = String(req.organization._id);
@@ -24,7 +24,7 @@ async function courseForRequest(req, courseId, roles = ['administrador', 'tutor'
     'SELECT id, course_code, name, description, status FROM academic_courses WHERE organization_id=? AND id=? LIMIT 1',
     [orgId, courseId]
   );
-  if (!courses.length || courses[0].status !== 'activo') throw new ApiError(404, 'No se encontró el curso activo.', { code: 'COURSE_NOT_FOUND' });
+  if (!courses.length || (courses[0].status !== 'activo' && !(allowInactive && role === 'administrador'))) throw new ApiError(404, 'No se encontró el curso activo.', { code: 'COURSE_NOT_FOUND' });
   if (role === 'tutor') {
     const [assigned] = await pool.execute(
       "SELECT id FROM academic_course_teachers WHERE organization_id=? AND course_id=? AND teacher_user_id=? AND status='activo' LIMIT 1",
@@ -348,6 +348,7 @@ const eliminarActividadCurso = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  courseForRequest,
   listarCursosAdministracion, crearCurso, actualizarCurso, asignarDocente, guardarModulos,
   crearActividadCurso, actualizarActividadCurso, eliminarActividadCurso
 };
