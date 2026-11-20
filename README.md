@@ -82,3 +82,7 @@ La aplicación utiliza los adaptadores y variables definidos en el código para 
 ## Informe del TCC de Desarrollo Web
 
 La documentación de formularios, validaciones, modelo MongoDB, operaciones CRUD y matriz de pruebas está en [`documentacion/tcc/INFORME_TCC_DESARROLLO_WEB.md`](documentacion/tcc/INFORME_TCC_DESARROLLO_WEB.md). Los casos manuales sin ejecutar se identifican como pendientes y no se presentan como evidencias realizadas.
+
+## Paquetes para usuarios finales
+
+Consulta [la guía de distribución](DISTRIBUCION.md).

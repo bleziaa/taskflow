@@ -24,7 +24,7 @@ async function iniciar() {
 
   const app = crearApp({ sessionStore: crearSessionStore() });
 
-  const server = app.listen(env.port, () => {
+  const server = app.listen(env.port, env.host, () => {
     console.log(`[server] TaskFlow escuchando en http://127.0.0.1:${env.port}`);
     console.log(`[server] Salud disponible en http://127.0.0.1:${env.port}/api/health`);
   });
