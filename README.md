@@ -1,14 +1,26 @@
 # TaskFlow
 
-Sistema web para el control y seguimiento de prácticas empresariales.
+Sistema web de control y seguimiento de prácticas empresariales, con espacios académicos para cursos, actividades, evidencias, evaluaciones e informes. Incluye gestión de usuarios y roles, organizaciones y asignaciones de docentes y estudiantes.
+
+## Tecnologías y arquitectura
+
+- Node.js y JavaScript del lado del servidor.
+- Express 5 para rutas y servicios HTTP.
+- MongoDB con Mongoose para identidad, organizaciones, sesiones y flujos de prácticas.
+- MySQL mediante mysql2 para la estructura académica relacional cuando se habilita su integración.
+- HTML, CSS y JavaScript para la interfaz web.
+- PDF.js para visualizar documentos dentro de la aplicación.
+- Nodemailer para correo y Gemini opcional para el asistente.
+
+El servidor sirve la aplicación desde `public/`, valida formularios, aplica permisos y expone la API. MongoDB es obligatorio. MySQL es opcional para las funciones relacionales de cursos y matrícula. El correo, Cloudinary y Gemini se configuran solo cuando se necesitan.
 
 ## Requisitos
 
-- Node.js 20.16 o superior (requerido por el visor PDF).
+- Node.js 20.16 o superior al ejecutar desde el código fuente. Los paquetes descargables incluyen Node.js.
 - npm.
 - Acceso a las bases de datos configuradas para el entorno que se vaya a utilizar.
 
-## Puesta en marcha local
+## Puesta en marcha desde el código fuente
 
 1. Abrir una terminal en esta carpeta.
 2. Instalar dependencias si aún no están instaladas:
@@ -30,11 +42,13 @@ Para desarrollo con recarga automática:
 npm run dev
 ```
 
-## Pruebas
+## Pruebas y automatización
 
 ```bash
 npm test
 ```
+
+GitHub Actions ejecuta las pruebas en Windows y Linux y verifica el inicio del paquete descargable. Un trabajo adicional prueba los flujos de matrícula con MySQL.
 
 ## Mapa del proyecto
 
@@ -85,4 +99,5 @@ La documentación de formularios, validaciones, modelo MongoDB, operaciones CRUD
 
 ## Paquetes para usuarios finales
 
-Consulta [la guía de distribución](DISTRIBUCION.md).
+Descarga el paquete con Node.js y dependencias desde [GitHub Releases](https://github.com/bleziaa/taskflow/releases/tag/cross-v0.1.0). MongoDB debe estar iniciado. MySQL/MariaDB se requiere para los flujos académicos relacionales. Consulta [la guía de distribución](DISTRIBUCION.md).
+
