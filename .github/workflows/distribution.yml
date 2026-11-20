@@ -1,0 +1,112 @@
+name: Pruebas y distribución
+on:
+  push:
+    branches: [main, 'feat/cross-platform-distribution']
+    tags: ['cross-v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            platform: linux
+          - runner: windows-2025
+            platform: windows
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: bash
+    env:
+      MONGOMS_VERSION: '8.2.5'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Instalar dependencias y probar
+        run: |
+          npm ci
+          npm test
+      - name: Empaquetar runtime, aplicación y dependencias
+        run: |
+          node scripts/package-local.js
+          npm ci --prefix dist/TaskFlow --omit=dev
+          cp DISTRIBUCION.md dist/TaskFlow/
+          mkdir -p downloads
+      - name: Arrancar paquete y verificar recursos por HTTP
+        run: node tests/support/package-smoke.cjs
+      - name: Archivar paquete Linux
+        if: runner.os == 'Linux'
+        run: |
+          tar -czf downloads/TaskFlow-linux-x64.tar.gz -C dist TaskFlow
+          tar -tzf downloads/TaskFlow-linux-x64.tar.gz >/dev/null
+      - name: Archivar paquete Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          tar.exe -a -cf downloads/TaskFlow-windows-x64.zip -C dist TaskFlow
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          tar.exe -tf downloads/TaskFlow-windows-x64.zip | Out-Null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TaskFlow-${{ matrix.platform }}-x64
+          path: downloads/*
+          if-no-files-found: error
+
+  mysql:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: taskflow-ci-ephemeral
+          MYSQL_ROOT_HOST: '%'
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+        ports:
+          - 3306/tcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Pruebas de matrículas con MongoDB y MySQL
+        run: node --test tests/course-enrollment.test.js
+        env:
+          MONGOMS_VERSION: '8.2.5'
+          TASKFLOW_TEST_MYSQL_PORT: ${{ job.services.mysql.ports['3306'] }}
+          TASKFLOW_TEST_MYSQL_PASSWORD: taskflow-ci-ephemeral
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/cross-v')
+    needs: [build, mysql]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Publicar paquetes verificados
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(find release-assets -maxdepth 1 -type f | wc -l)" -eq 2
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes release-assets/*
