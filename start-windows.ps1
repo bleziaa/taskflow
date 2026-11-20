@@ -14,6 +14,19 @@ if (-not (Test-Path "node_modules")) {
   & npm.cmd ci
   if ($LASTEXITCODE -ne 0) { throw "Error instalando dependencias." }
 }
-Write-Host "Iniciando TaskFlow. Requiere MongoDB accesible segun .env."
-& npm.cmd start
-exit $LASTEXITCODE
+$port = 3000
+$portEntry = Get-Content ".env" | Where-Object { $_ -match '^PORT=' } | Select-Object -First 1
+if ($portEntry) { $port = [int]($portEntry -replace '^PORT=', '') }
+$url = "http://127.0.0.1:$port/"
+$browserJob = Start-Job -ArgumentList $url -ScriptBlock {
+  param($target)
+  for ($i = 0; $i -lt 60; $i++) {
+    try {
+      $response = Invoke-WebRequest -Uri $target -TimeoutSec 2 -UseBasicParsing
+      if ($response.StatusCode -ge 200) { Start-Process $target; break }
+    } catch { Start-Sleep -Milliseconds 500 }
+  }
+}
+Write-Host "Iniciando TaskFlow; requiere MongoDB accesible segun .env."
+try { & npm.cmd start; exit $LASTEXITCODE }
+finally { Stop-Job $browserJob -ErrorAction SilentlyContinue; Remove-Job $browserJob -Force -ErrorAction SilentlyContinue }

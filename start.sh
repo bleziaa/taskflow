@@ -12,4 +12,20 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 if [[ ! -d node_modules ]]; then npm ci; fi
-exec npm start
+port="$(sed -n 's/^PORT=//p' .env | head -n 1)"
+port="${port:-3000}"
+url="http://127.0.0.1:${port}/"
+npm start &
+server_pid=$!
+trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT INT TERM
+for _ in $(seq 1 60); do
+  if ! kill -0 "$server_pid" 2>/dev/null; then
+    wait "$server_pid"
+  fi
+  if node -e 'fetch(process.argv[1]).then(()=>process.exit(0)).catch(()=>process.exit(1))' "$url" >/dev/null 2>&1; then
+    if command -v xdg-open >/dev/null 2>&1; then xdg-open "$url" >/dev/null 2>&1 || true; fi
+    break
+  fi
+  sleep 0.5
+done
+wait "$server_pid"
