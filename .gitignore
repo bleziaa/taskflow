@@ -48,3 +48,5 @@ atlas-credentials.env
 # Auditorías locales y copias del editor
 /work/
 *.before-refresh.bak
+
+/dist/
